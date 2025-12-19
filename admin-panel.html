@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quản Trị Admin | Thiết Kế Nội Thất</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="admin.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+</head>
+<body class="admin-panel-page">
+    <!-- Admin Header -->
+    <header class="admin-header">
+        <div class="admin-header-content">
+            <h1>Quản Trị Hệ Thống</h1>
+            <div class="admin-header-actions">
+                <a href="index.html" class="btn-view-site" target="_blank">Xem Website</a>
+                <button id="logoutBtn" class="btn-logout">Đăng Xuất</button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Admin Content -->
+    <div class="admin-container">
+        <!-- Sidebar -->
+        <aside class="admin-sidebar">
+            <nav class="admin-nav">
+                <a href="#projects" class="nav-item active" data-section="projects">
+                    <span>📁</span> Quản Lý Dự Án
+                </a>
+                <a href="#contact" class="nav-item" data-section="contact">
+                    <span>📧</span> Thông Tin Liên Hệ
+                </a>
+                <a href="#settings" class="nav-item" data-section="settings">
+                    <span>⚙️</span> Cài Đặt
+                </a>
+            </nav>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="admin-main">
+            <!-- Projects Management Section -->
+            <section id="projects-section" class="admin-section active">
+                <div class="section-header-admin">
+                    <h2>Quản Lý Dự Án</h2>
+                    <button id="addProjectBtn" class="btn-add">+ Thêm Dự Án Mới</button>
+                </div>
+                <div class="projects-list" id="projectsList">
+                    <!-- Projects will be loaded here -->
+                </div>
+            </section>
+
+            <!-- Contact Information Section -->
+            <section id="contact-section" class="admin-section">
+                <div class="section-header-admin">
+                    <h2>Thông Tin Liên Hệ</h2>
+                </div>
+                <div class="contact-form-admin">
+                    <div class="form-group">
+                        <label for="contactEmail">Email</label>
+                        <input type="email" id="contactEmail" placeholder="info@interiordesign.com">
+                    </div>
+                    <div class="form-group">
+                        <label for="contactPhone">Điện thoại</label>
+                        <input type="tel" id="contactPhone" placeholder="+84 123 456 789">
+                    </div>
+                    <div class="form-group">
+                        <label for="contactAddress">Địa chỉ</label>
+                        <input type="text" id="contactAddress" placeholder="123 Đường ABC, Quận XYZ, TP.HCM">
+                    </div>
+                    <button id="saveContactBtn" class="btn-save">Lưu Thông Tin</button>
+                </div>
+            </section>
+
+            <!-- Settings Section -->
+            <section id="settings-section" class="admin-section">
+                <div class="section-header-admin">
+                    <h2>Cài Đặt</h2>
+                </div>
+                <div class="settings-form">
+                    <div class="form-group">
+                        <label for="adminUsername">Tên đăng nhập Admin</label>
+                        <input type="text" id="adminUsername" placeholder="admin">
+                    </div>
+                    <div class="form-group">
+                        <label for="adminPassword">Mật khẩu mới</label>
+                        <input type="password" id="adminPassword" placeholder="Để trống nếu không muốn đổi">
+                    </div>
+                    <div class="form-group">
+                        <label for="confirmPassword">Xác nhận mật khẩu</label>
+                        <input type="password" id="confirmPassword" placeholder="Xác nhận mật khẩu mới">
+                    </div>
+                    <div class="settings-divider"></div>
+                    <h3 style="margin-bottom: var(--spacing-md); color: var(--secondary-color);">Cài Đặt Nén Ảnh</h3>
+                    <div class="form-group">
+                        <label for="maxImageWidth">Chiều rộng tối đa (px)</label>
+                        <input type="number" id="maxImageWidth" min="400" max="2400" step="100" value="1200">
+                        <small style="color: var(--text-light); font-size: 0.85rem;">Ảnh sẽ được thu nhỏ nếu lớn hơn giá trị này</small>
+                    </div>
+                    <div class="form-group">
+                        <label for="maxImageHeight">Chiều cao tối đa (px)</label>
+                        <input type="number" id="maxImageHeight" min="400" max="2400" step="100" value="1200">
+                    </div>
+                    <div class="form-group">
+                        <label for="imageQuality">Chất lượng nén (0.1 - 1.0)</label>
+                        <input type="number" id="imageQuality" min="0.1" max="1.0" step="0.1" value="0.8">
+                        <small style="color: var(--text-light); font-size: 0.85rem;">Giá trị cao hơn = chất lượng tốt hơn nhưng file lớn hơn</small>
+                    </div>
+                    <div class="form-group">
+                        <label for="maxImageSizeKB">Kích thước tối đa (KB)</label>
+                        <input type="number" id="maxImageSizeKB" min="100" max="2000" step="100" value="500">
+                        <small style="color: var(--text-light); font-size: 0.85rem;">Hệ thống sẽ tự động giảm chất lượng để đạt kích thước này</small>
+                    </div>
+                    <button id="saveSettingsBtn" class="btn-save">Lưu Cài Đặt</button>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- Project Modal -->
+    <div id="projectModal" class="modal">
+        <div class="modal-content modal-large">
+            <span class="modal-close">&times;</span>
+            <h2 id="modalTitle">Thêm Dự Án Mới</h2>
+            <form id="projectForm" class="project-form">
+                <input type="hidden" id="projectId">
+                
+                <div class="form-group">
+                    <label for="projectTitle">Tiêu đề dự án *</label>
+                    <input type="text" id="projectTitle" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="projectStyle">Phong cách *</label>
+                    <input type="text" id="projectStyle" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="projectDescription">Mô tả *</label>
+                    <textarea id="projectDescription" rows="4" required></textarea>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="projectBeforeImage">Link ảnh trước khi thiết kế *</label>
+                        <input type="url" id="projectBeforeImage" placeholder="https://example.com/image.jpg">
+                        <div class="image-upload-section">
+                            <label class="upload-label">
+                                <input type="file" id="beforeImageFile" accept="image/*" style="display: none;">
+                                <span class="upload-btn">📤 Hoặc upload ảnh</span>
+                            </label>
+                            <div id="beforeImagePreview" class="image-preview"></div>
+                            <div class="image-info">
+                                <span id="beforeImageSize" class="image-size"></span>
+                                <span id="beforeImageStatus" class="image-status"></span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="projectAfterImage">Link ảnh sau khi thiết kế *</label>
+                        <input type="url" id="projectAfterImage" placeholder="https://example.com/image.jpg">
+                        <div class="image-upload-section">
+                            <label class="upload-label">
+                                <input type="file" id="afterImageFile" accept="image/*" style="display: none;">
+                                <span class="upload-btn">📤 Hoặc upload ảnh</span>
+                            </label>
+                            <div id="afterImagePreview" class="image-preview"></div>
+                            <div class="image-info">
+                                <span id="afterImageSize" class="image-size"></span>
+                                <span id="afterImageStatus" class="image-status"></span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="projectTotalCost">Tổng chi phí *</label>
+                    <input type="text" id="projectTotalCost" placeholder="350.000.000 VNĐ" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="projectCostItems">Các hạng mục chi phí (mỗi dòng một mục) *</label>
+                    <textarea id="projectCostItems" rows="6" placeholder="Thiết kế và lập hồ sơ kỹ thuật&#10;Sơn tường và trần nhà&#10;Lắp đặt sàn gỗ tự nhiên" required></textarea>
+                </div>
+
+                <div class="form-actions">
+                    <button type="button" class="btn-cancel" onclick="closeProjectModal()">Hủy</button>
+                    <button type="submit" class="btn-save">Lưu Dự Án</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="data.js"></script>
+    <script src="image-compress.js"></script>
+    <script src="admin.js"></script>
+</body>
+</html>
+

@@ -132,11 +132,18 @@ Mở file `styles.css` và chỉnh sửa các biến CSS trong phần `:root`:
 
 ### Bước 2: Kích Hoạt GitHub Pages
 
-1. Vào **Settings** của repository
-2. Cuộn xuống phần **Pages**
-3. Trong **Source**, chọn branch `main` (hoặc `master`)
-4. Chọn folder `/ (root)`
-5. Click **Save**
+1. Vào **Settings** của repository (tab ở thanh menu trên)
+2. Click vào **Pages** ở sidebar bên trái (dưới mục "Code and automation")
+3. Trong phần **"Build and deployment"**:
+   - **Source:** Chọn **"Deploy from a branch"** từ dropdown đầu tiên
+   - **Branch:** 
+     - Click dropdown đang hiển thị **"None"**
+     - Chọn branch **"main"** (hoặc **"master"** nếu repository bạn dùng master)
+     - Ở dropdown bên cạnh, chọn **"/ (root)"** (thư mục gốc)
+   - Click nút **"Save"** (sẽ sáng lên sau khi bạn chọn branch)
+4. Đợi vài giây, bạn sẽ thấy thông báo màu xanh với link website của bạn
+
+**📌 Lưu ý:** Nếu không thấy branch trong dropdown, đảm bảo bạn đã commit và push code lên GitHub trước.
 
 ### Bước 3: Truy Cập Website
 
