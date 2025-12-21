@@ -78,11 +78,48 @@ async function loadProjects() {
                     // Import images if they exist in the data
                     if (data.images && typeof data.images === 'object') {
                         let imageCount = 0;
+                        let failedCount = 0;
                         Object.keys(data.images).forEach(key => {
-                            localStorage.setItem(key, data.images[key]);
-                            imageCount++;
+                            try {
+                                const imageData = data.images[key];
+                                if (imageData && typeof imageData === 'string') {
+                                    localStorage.setItem(key, imageData);
+                                    imageCount++;
+                                } else {
+                                    console.warn(`⚠️ Hình ảnh ${key} không hợp lệ`);
+                                    failedCount++;
+                                }
+                            } catch (error) {
+                                console.error(`❌ Lỗi khi import hình ảnh ${key}:`, error);
+                                failedCount++;
+                                // Nếu localStorage đầy, thử xóa một số item cũ
+                                if (error.name === 'QuotaExceededError') {
+                                    console.warn('⚠️ localStorage đầy, đang thử dọn dẹp...');
+                                    try {
+                                        // Xóa các image cũ không còn được sử dụng
+                                        const usedImages = new Set();
+                                        projects.forEach(p => {
+                                            if (p.beforeImage) usedImages.add(p.beforeImage);
+                                            if (p.afterImage) usedImages.add(p.afterImage);
+                                        });
+                                        Object.keys(localStorage).forEach(k => {
+                                            if (k.startsWith('project_image_') && !usedImages.has(k)) {
+                                                localStorage.removeItem(k);
+                                            }
+                                        });
+                                        // Thử lại
+                                        localStorage.setItem(key, data.images[key]);
+                                        imageCount++;
+                                        failedCount--;
+                                    } catch (retryError) {
+                                        console.error('❌ Vẫn không thể lưu hình ảnh sau khi dọn dẹp');
+                                    }
+                                }
+                            }
                         });
-                        console.log(`✅ Đã import ${imageCount} hình ảnh vào localStorage`);
+                        console.log(`✅ Đã import ${imageCount} hình ảnh vào localStorage${failedCount > 0 ? `, ${failedCount} hình ảnh thất bại` : ''}`);
+                    } else {
+                        console.warn('⚠️ data.json không có phần images hoặc không hợp lệ');
                     }
                     
                     // Also save to localStorage as backup (không trigger auto-export vì isLoadingData = true)
@@ -249,15 +286,25 @@ function updateSliderPosition(e, container, slider, afterImage) {
 }
 
 // Render projects on homepage
-function renderProjects() {
+async function renderProjects() {
     const projectsGrid = document.getElementById('projectsGrid');
     if (!projectsGrid) return;
+    
+    // Load all images first
+    for (const project of projects) {
+        if (project.beforeImage && project.beforeImage.startsWith('project_image_')) {
+            await getImageSrc(project.beforeImage);
+        }
+        if (project.afterImage && project.afterImage.startsWith('project_image_')) {
+            await getImageSrc(project.afterImage);
+        }
+    }
     
     projectsGrid.innerHTML = projects.map(project => `
         <div class="project-card">
             <div class="project-image-container">
-                <img src="${getImageSrc(project.beforeImage)}" alt="Before" class="project-image-before">
-                <img src="${getImageSrc(project.afterImage)}" alt="After" class="project-image-after">
+                <img src="${getImageSrcSync(project.beforeImage)}" alt="Before" class="project-image-before" onerror="this.src='data:image/svg+xml,%3Csvg xmlns=\\'http://www.w3.org/2000/svg\\' width=\\'400\\' height=\\'300\\'%3E%3Crect fill=\\'%23ddd\\' width=\\'400\\' height=\\'300\\'/%3E%3Ctext fill=\\'%23999\\' font-family=\\'sans-serif\\' font-size=\\'18\\' x=\\'50%25\\' y=\\'50%25\\' text-anchor=\\'middle\\' dy=\\'.3em\\'%3EĐang tải...%3C/text%3E%3C/svg%3E'; this.onerror=null;">
+                <img src="${getImageSrcSync(project.afterImage)}" alt="After" class="project-image-after" onerror="this.src='data:image/svg+xml,%3Csvg xmlns=\\'http://www.w3.org/2000/svg\\' width=\\'400\\' height=\\'300\\'%3E%3Crect fill=\\'%23ddd\\' width=\\'400\\' height=\\'300\\'/%3E%3Ctext fill=\\'%23999\\' font-family=\\'sans-serif\\' font-size=\\'18\\' x=\\'50%25\\' y=\\'50%25\\' text-anchor=\\'middle\\' dy=\\'.3em\\'%3EĐang tải...%3C/text%3E%3C/svg%3E'; this.onerror=null;">
                 <div class="reveal-slider"></div>
             </div>
             <div class="project-info" onclick="viewProjectDetail(${project.id})" style="cursor: pointer;">
@@ -271,6 +318,25 @@ function renderProjects() {
         </div>
     `).join('');
     
+    // Update images after initial render (for async loading)
+    for (let i = 0; i < projects.length; i++) {
+        const project = projects[i];
+        const card = projectsGrid.children[i];
+        if (card) {
+            const beforeImg = card.querySelector('.project-image-before');
+            const afterImg = card.querySelector('.project-image-after');
+            
+            if (beforeImg && project.beforeImage) {
+                const src = await getImageSrc(project.beforeImage);
+                if (src) beforeImg.src = src;
+            }
+            if (afterImg && project.afterImage) {
+                const src = await getImageSrc(project.afterImage);
+                if (src) afterImg.src = src;
+            }
+        }
+    }
+    
     // Initialize reveal effect after rendering
     setTimeout(initRevealEffect, 100);
 }
@@ -281,7 +347,7 @@ function viewProjectDetail(id) {
 }
 
 // Load project detail
-function loadProjectDetail() {
+async function loadProjectDetail() {
     const urlParams = new URLSearchParams(window.location.search);
     const projectId = parseInt(urlParams.get('id'));
     
@@ -298,8 +364,27 @@ function loadProjectDetail() {
     }
     
     document.querySelector('.detail-title').textContent = project.title;
-    document.querySelector('.detail-image-before').src = getImageSrc(project.beforeImage);
-    document.querySelector('.detail-image-after').src = getImageSrc(project.afterImage);
+    
+    // Load images asynchronously
+    const beforeImg = document.querySelector('.detail-image-before');
+    const afterImg = document.querySelector('.detail-image-after');
+    
+    if (beforeImg && project.beforeImage) {
+        const src = await getImageSrc(project.beforeImage);
+        beforeImg.src = src || '';
+        beforeImg.onerror = function() {
+            this.src = 'data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'400\' height=\'300\'%3E%3Crect fill=\'%23ddd\' width=\'400\' height=\'300\'/%3E%3Ctext fill=\'%23999\' font-family=\'sans-serif\' font-size=\'18\' x=\'50%25\' y=\'50%25\' text-anchor=\'middle\' dy=\'.3em\'%3EKhông tìm thấy hình ảnh%3C/text%3E%3C/svg%3E';
+        };
+    }
+    
+    if (afterImg && project.afterImage) {
+        const src = await getImageSrc(project.afterImage);
+        afterImg.src = src || '';
+        afterImg.onerror = function() {
+            this.src = 'data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'400\' height=\'300\'%3E%3Crect fill=\'%23ddd\' width=\'400\' height=\'300\'/%3E%3Ctext fill=\'%23999\' font-family=\'sans-serif\' font-size=\'18\' x=\'50%25\' y=\'50%25\' text-anchor=\'middle\' dy=\'.3em\'%3EKhông tìm thấy hình ảnh%3C/text%3E%3C/svg%3E';
+        };
+    }
+    
     document.querySelector('.detail-description').textContent = project.details;
     document.querySelector('.pricing-amount').textContent = project.price;
     
@@ -419,16 +504,95 @@ async function handleImageUpload(fileInputId, hiddenInputId, previewId) {
     }
 }
 
+// Cache để lưu images đã load từ data.json (tránh load lại nhiều lần)
+const imageCache = {};
+
+// Load image từ data.json nếu không có trong localStorage
+async function loadImageFromDataJson(imageKey) {
+    if (imageCache[imageKey]) {
+        return imageCache[imageKey];
+    }
+    
+    try {
+        const possiblePaths = [
+            'data.json',
+            './data.json',
+            '/data.json',
+            window.location.pathname.replace(/\/[^/]*$/, '') + '/data.json'
+        ];
+        
+        for (const path of possiblePaths) {
+            try {
+                const response = await fetch(path);
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.images && data.images[imageKey]) {
+                        // Lưu vào localStorage và cache
+                        try {
+                            localStorage.setItem(imageKey, data.images[imageKey]);
+                            imageCache[imageKey] = data.images[imageKey];
+                            console.log(`✅ Đã load lại hình ảnh ${imageKey} từ data.json`);
+                            return data.images[imageKey];
+                        } catch (error) {
+                            // Nếu không thể lưu vào localStorage, chỉ dùng cache
+                            imageCache[imageKey] = data.images[imageKey];
+                            return data.images[imageKey];
+                        }
+                    }
+                }
+            } catch (error) {
+                // Tiếp tục thử path tiếp theo
+            }
+        }
+    } catch (error) {
+        console.error(`❌ Lỗi khi load hình ảnh ${imageKey} từ data.json:`, error);
+    }
+    
+    return null;
+}
+
 // Get image from storage or URL
-function getImageSrc(imageValue) {
+async function getImageSrc(imageValue) {
     if (!imageValue) return '';
     
     // Check if it's a storage key (starts with 'project_image_')
     if (imageValue.startsWith('project_image_')) {
-        return localStorage.getItem(imageValue) || imageValue;
+        // Thử lấy từ localStorage trước
+        let storedImage = localStorage.getItem(imageValue);
+        
+        if (storedImage) {
+            return storedImage;
+        }
+        
+        // Nếu không có trong localStorage, thử load từ cache
+        if (imageCache[imageValue]) {
+            return imageCache[imageValue];
+        }
+        
+        // Nếu không có trong cache, thử load từ data.json
+        storedImage = await loadImageFromDataJson(imageValue);
+        if (storedImage) {
+            return storedImage;
+        }
+        
+        // Nếu vẫn không tìm thấy, log warning và trả về rỗng
+        console.warn(`⚠️ Không tìm thấy hình ảnh với key: ${imageValue}`);
+        return '';
     }
     
     // Otherwise, it's a URL
+    return imageValue;
+}
+
+// Synchronous version for use in template strings (fallback)
+function getImageSrcSync(imageValue) {
+    if (!imageValue) return '';
+    
+    if (imageValue.startsWith('project_image_')) {
+        const storedImage = localStorage.getItem(imageValue) || imageCache[imageValue];
+        return storedImage || '';
+    }
+    
     return imageValue;
 }
 
