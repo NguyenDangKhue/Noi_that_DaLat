@@ -19,7 +19,6 @@
                 </div>
                 <ul class="nav-menu">
                     <li><a href="index.html">Trang Chủ</a></li>
-                    <li><a href="#" onclick="logout(); return false;" class="btn-login">Đăng Xuất</a></li>
                 </ul>
             </div>
         </nav>
@@ -27,12 +26,33 @@
 
     <!-- Admin Content -->
     <div class="admin-container">
+        <div class="admin-welcome">
+            <div class="welcome-content">
+                <h2>Xin chào, <span id="currentUserName"></span>!</h2>
+                <p>Quản lý dự án và cài đặt hệ thống</p>
+            </div>
+            <div class="admin-actions-header">
+                <button class="btn-account" onclick="openAccountModal()" title="Quản lý tài khoản">
+                    <span>👤</span> Tài Khoản
+                </button>
+                <button class="btn-logout-header" onclick="logout()" title="Đăng xuất">
+                    <span>🚪</span> Đăng Xuất
+                </button>
+            </div>
+        </div>
+
         <div class="admin-header">
             <h1 class="admin-title">Quản Lý Dự Án</h1>
-            <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
-                <button class="btn-add" onclick="openAddModal()">+ Thêm Dự Án Mới</button>
-                <button class="btn-export" onclick="exportData()" style="background: #27ae60; color: white; padding: 0.8rem 1.5rem; border: none; border-radius: 5px; font-weight: 600; cursor: pointer; transition: var(--transition); font-family: 'Montserrat', sans-serif;">📥 Export Dữ Liệu</button>
-                <label for="importFile" class="btn-import" style="background: #3498db; color: white; padding: 0.8rem 1.5rem; border: none; border-radius: 5px; font-weight: 600; cursor: pointer; transition: var(--transition); display: inline-block; font-family: 'Montserrat', sans-serif;">📤 Import Dữ Liệu</label>
+            <div class="admin-buttons">
+                <button class="btn-add" onclick="openAddModal()">
+                    <span>+</span> Thêm Dự Án Mới
+                </button>
+                <button class="btn-export" onclick="exportData()">
+                    <span>📥</span> Export Dữ Liệu
+                </button>
+                <label for="importFile" class="btn-import">
+                    <span>📤</span> Import Dữ Liệu
+                </label>
                 <input type="file" id="importFile" accept=".json" style="display: none;" onchange="importData(event)">
             </div>
         </div>
@@ -104,6 +124,63 @@
                 </div>
                 <button type="button" class="btn-submit" id="saveProjectBtn" onclick="addProject()">Lưu</button>
             </form>
+        </div>
+    </div>
+
+    <!-- Account Management Modal -->
+    <div class="modal" id="accountModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title">Quản Lý Tài Khoản</h2>
+                <button class="close-modal" onclick="closeAccountModal()">&times;</button>
+            </div>
+            <div class="account-tabs">
+                <button class="account-tab-btn active" onclick="switchAccountTab('changePassword')">Đổi Mật Khẩu</button>
+                <button class="account-tab-btn" onclick="switchAccountTab('manageAccounts')">Quản Lý Tài Khoản</button>
+            </div>
+
+            <!-- Change Password Tab -->
+            <div id="changePasswordTab" class="account-tab-content active">
+                <div class="info-box" style="margin-bottom: 1.5rem;">
+                    <p>Bạn đang đổi mật khẩu cho tài khoản của chính mình.</p>
+                </div>
+                <form onsubmit="event.preventDefault(); changePassword();">
+                    <div class="form-group">
+                        <label for="currentPassword">Mật khẩu hiện tại</label>
+                        <input type="password" id="currentPassword" placeholder="Nhập mật khẩu hiện tại" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="newPasswordChange">Mật khẩu mới</label>
+                        <input type="password" id="newPasswordChange" placeholder="Mật khẩu mới (tối thiểu 6 ký tự)" required minlength="6">
+                    </div>
+                    <div class="form-group">
+                        <label for="confirmPasswordChange">Xác nhận mật khẩu mới</label>
+                        <input type="password" id="confirmPasswordChange" placeholder="Nhập lại mật khẩu mới" required>
+                    </div>
+                    <button type="submit" class="btn-submit">Đổi Mật Khẩu</button>
+                </form>
+            </div>
+
+            <!-- Manage Accounts Tab -->
+            <div id="manageAccountsTab" class="account-tab-content" style="display: none;">
+                <div class="accounts-list" id="accountsList">
+                    <!-- Accounts will be loaded here -->
+                </div>
+                <div class="add-account-section">
+                    <h3 style="margin-bottom: 1rem; color: var(--primary-color);">Tạo Tài Khoản Mới</h3>
+                    <form onsubmit="event.preventDefault(); createNewAccount();">
+                        <div class="form-group">
+                            <label for="newAccountUsername">Tên đăng nhập</label>
+                            <input type="text" id="newAccountUsername" placeholder="Tên đăng nhập mới" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="newAccountPassword">Mật khẩu</label>
+                            <input type="password" id="newAccountPassword" placeholder="Mật khẩu (tối thiểu 6 ký tự)" required minlength="6">
+                        </div>
+                        <button type="submit" class="btn-submit">Tạo Tài Khoản</button>
+                    </form>
+                </div>
+            </div>
         </div>
     </div>
 

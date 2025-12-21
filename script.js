@@ -1,3 +1,9 @@
+// Flag để kiểm tra xem có đang load dữ liệu không (tránh auto-export khi load)
+let isLoadingData = false;
+
+// Debounce timer cho auto-export để tránh download quá nhiều lần
+let autoExportTimer = null;
+
 // Sample projects data
 let projects = [
     {
@@ -49,27 +55,67 @@ let projects = [
 
 // Load projects from localStorage, data.json, or use default
 async function loadProjects() {
+    isLoadingData = true; // Đánh dấu đang load dữ liệu
+    
     // First try to load from data.json (for GitHub Pages)
-    try {
-        const response = await fetch('data.json');
-        if (response.ok) {
-            const data = await response.json();
-            if (data.projects && data.projects.length > 0) {
-                projects = data.projects;
-                // Also save to localStorage as backup
-                saveProjects();
-                return;
+    // Try multiple paths to handle different GitHub Pages configurations
+    const possiblePaths = [
+        'data.json',
+        './data.json',
+        '/data.json',
+        window.location.pathname.replace(/\/[^/]*$/, '') + '/data.json'
+    ];
+    
+    for (const path of possiblePaths) {
+        try {
+            const response = await fetch(path);
+            if (response.ok) {
+                const data = await response.json();
+                if (data.projects && Array.isArray(data.projects) && data.projects.length > 0) {
+                    projects = data.projects;
+                    console.log(`✅ Đã tải ${projects.length} dự án từ data.json (từ đường dẫn: ${path})`);
+                    
+                    // Import images if they exist in the data
+                    if (data.images && typeof data.images === 'object') {
+                        let imageCount = 0;
+                        Object.keys(data.images).forEach(key => {
+                            localStorage.setItem(key, data.images[key]);
+                            imageCount++;
+                        });
+                        console.log(`✅ Đã import ${imageCount} hình ảnh vào localStorage`);
+                    }
+                    
+                    // Also save to localStorage as backup (không trigger auto-export vì isLoadingData = true)
+                    localStorage.setItem('projects', JSON.stringify(projects));
+                    isLoadingData = false;
+                    return;
+                } else {
+                    console.warn(`⚠️ data.json tìm thấy nhưng không có dự án hợp lệ (từ đường dẫn: ${path})`);
+                }
+            } else {
+                console.log(`⚠️ Không thể tải data.json từ ${path} (status: ${response.status})`);
             }
+        } catch (error) {
+            console.log(`⚠️ Lỗi khi tải data.json từ ${path}:`, error.message);
         }
-    } catch (error) {
-        console.log('Không tìm thấy data.json, sử dụng localStorage hoặc dữ liệu mặc định');
     }
+    
+    console.log('📦 Không tìm thấy data.json, sử dụng localStorage hoặc dữ liệu mặc định');
     
     // Fallback to localStorage
     const savedProjects = localStorage.getItem('projects');
     if (savedProjects) {
-        projects = JSON.parse(savedProjects);
+        try {
+            projects = JSON.parse(savedProjects);
+            console.log(`✅ Đã tải ${projects.length} dự án từ localStorage`);
+        } catch (error) {
+            console.error('❌ Lỗi khi parse dữ liệu từ localStorage:', error);
+        }
+    } else {
+        console.log('📋 Sử dụng dữ liệu mặc định từ script.js');
     }
+    
+    isLoadingData = false; // Hoàn tất load dữ liệu
 }
 
 // Save projects to localStorage
@@ -386,29 +432,108 @@ function getImageSrc(imageValue) {
     return imageValue;
 }
 
+// Initialize admin accounts system
+function initAdminAccounts() {
+    if (!localStorage.getItem('adminAccounts')) {
+        // Create default admin account
+        const defaultAccounts = {
+            'admin': {
+                password: 'admin',
+                createdAt: new Date().toISOString(),
+                isAdmin: true
+            }
+        };
+        localStorage.setItem('adminAccounts', JSON.stringify(defaultAccounts));
+    } else {
+        // Ensure admin account has isAdmin flag
+        const accounts = JSON.parse(localStorage.getItem('adminAccounts'));
+        if (accounts['admin'] && !accounts['admin'].isAdmin) {
+            accounts['admin'].isAdmin = true;
+            localStorage.setItem('adminAccounts', JSON.stringify(accounts));
+        }
+    }
+}
+
+// Check if user is admin
+function isAdmin() {
+    const currentUser = getCurrentUser();
+    if (!currentUser) return false;
+    
+    const accounts = getAdminAccounts();
+    return accounts[currentUser] && accounts[currentUser].isAdmin === true;
+}
+
+// Get admin accounts
+function getAdminAccounts() {
+    const accounts = localStorage.getItem('adminAccounts');
+    return accounts ? JSON.parse(accounts) : {};
+}
+
+// Save admin accounts
+function saveAdminAccounts(accounts) {
+    localStorage.setItem('adminAccounts', JSON.stringify(accounts));
+}
+
 // Check if user is logged in
 function checkAuth() {
-    return localStorage.getItem('isLoggedIn') === 'true';
+    return localStorage.getItem('isLoggedIn') === 'true' && localStorage.getItem('currentUser');
+}
+
+// Get current user
+function getCurrentUser() {
+    return localStorage.getItem('currentUser');
 }
 
 // Login function
 function login() {
-    const username = document.getElementById('username').value;
+    const username = document.getElementById('username').value.trim();
     const password = document.getElementById('password').value;
     
-    // Simple authentication (in production, use proper authentication)
-    if (username === 'admin' && password === 'admin') {
+    if (!username || !password) {
+        showMessage('Vui lòng điền đầy đủ thông tin!', 'error');
+        return;
+    }
+    
+    const accounts = getAdminAccounts();
+    
+    if (accounts[username] && accounts[username].password === password) {
         localStorage.setItem('isLoggedIn', 'true');
+        localStorage.setItem('currentUser', username);
         window.location.href = 'admin.html';
     } else {
-        alert('Tên đăng nhập hoặc mật khẩu không đúng!');
+        showMessage('Tên đăng nhập hoặc mật khẩu không đúng!', 'error');
     }
+}
+
+
+// Show message
+function showMessage(message, type = 'info') {
+    // Remove existing messages
+    const existingMsg = document.querySelector('.login-message');
+    if (existingMsg) {
+        existingMsg.remove();
+    }
+    
+    const msgDiv = document.createElement('div');
+    msgDiv.className = `login-message ${type}`;
+    msgDiv.textContent = message;
+    
+    const loginBox = document.querySelector('.login-box');
+    loginBox.insertBefore(msgDiv, loginBox.firstChild.nextSibling);
+    
+    setTimeout(() => {
+        msgDiv.style.opacity = '0';
+        setTimeout(() => msgDiv.remove(), 300);
+    }, 3000);
 }
 
 // Logout function
 function logout() {
-    localStorage.removeItem('isLoggedIn');
-    window.location.href = 'index.html';
+    if (confirm('Bạn có chắc chắn muốn đăng xuất?')) {
+        localStorage.removeItem('isLoggedIn');
+        localStorage.removeItem('currentUser');
+        window.location.href = 'index.html';
+    }
 }
 
 // Load admin page
@@ -416,6 +541,13 @@ function loadAdminPage() {
     if (!checkAuth()) {
         window.location.href = 'login.html';
         return;
+    }
+    
+    // Show current user name
+    const currentUser = getCurrentUser();
+    const userNameElement = document.getElementById('currentUserName');
+    if (userNameElement) {
+        userNameElement.textContent = currentUser || 'Admin';
     }
     
     const adminProjects = document.getElementById('adminProjects');
@@ -432,6 +564,233 @@ function loadAdminPage() {
             </div>
         </div>
     `).join('');
+}
+
+// Open account management modal
+function openAccountModal() {
+    document.getElementById('accountModal').classList.add('active');
+    switchAccountTab('changePassword');
+    loadAccountsList();
+}
+
+// Close account modal
+function closeAccountModal() {
+    document.getElementById('accountModal').classList.remove('active');
+    // Reset forms
+    document.getElementById('currentPassword').value = '';
+    document.getElementById('newPasswordChange').value = '';
+    document.getElementById('confirmPasswordChange').value = '';
+    document.getElementById('newAccountUsername').value = '';
+    document.getElementById('newAccountPassword').value = '';
+}
+
+// Switch account tab
+function switchAccountTab(tab) {
+    const changePasswordTab = document.getElementById('changePasswordTab');
+    const manageAccountsTab = document.getElementById('manageAccountsTab');
+    const tabs = document.querySelectorAll('.account-tab-btn');
+    
+    tabs.forEach(t => t.classList.remove('active'));
+    
+    if (tab === 'changePassword') {
+        changePasswordTab.style.display = 'block';
+        manageAccountsTab.style.display = 'none';
+        tabs[0].classList.add('active');
+    } else {
+        // Only admin can access manage accounts tab
+        if (!isAdmin()) {
+            alert('Chỉ tài khoản admin mới có quyền quản lý tài khoản!');
+            return;
+        }
+        changePasswordTab.style.display = 'none';
+        manageAccountsTab.style.display = 'block';
+        tabs[1].classList.add('active');
+        loadAccountsList();
+    }
+}
+
+// Change password
+function changePassword() {
+    const currentPassword = document.getElementById('currentPassword').value;
+    const newPassword = document.getElementById('newPasswordChange').value;
+    const confirmPassword = document.getElementById('confirmPasswordChange').value;
+    const targetUsername = document.getElementById('changePasswordUsername')?.value || getCurrentUser();
+    const currentUser = getCurrentUser();
+    const userIsAdmin = isAdmin();
+    
+    // If changing other user's password, must be admin
+    if (targetUsername !== currentUser && !userIsAdmin) {
+        alert('Bạn không có quyền đổi mật khẩu của tài khoản khác!');
+        return;
+    }
+    
+    if (!currentPassword || !newPassword || !confirmPassword) {
+        alert('Vui lòng điền đầy đủ thông tin!');
+        return;
+    }
+    
+    if (newPassword.length < 6) {
+        alert('Mật khẩu mới phải có ít nhất 6 ký tự!');
+        return;
+    }
+    
+    if (newPassword !== confirmPassword) {
+        alert('Mật khẩu xác nhận không khớp!');
+        return;
+    }
+    
+    const accounts = getAdminAccounts();
+    
+    // If admin changing other user's password, skip current password check
+    if (targetUsername === currentUser) {
+        if (!accounts[currentUser] || accounts[currentUser].password !== currentPassword) {
+            alert('Mật khẩu hiện tại không đúng!');
+            return;
+        }
+    }
+    
+    accounts[targetUsername].password = newPassword;
+    saveAdminAccounts(accounts);
+    
+    alert('Đổi mật khẩu thành công!');
+    closeAccountModal();
+}
+
+// Load accounts list
+function loadAccountsList() {
+    const accountsList = document.getElementById('accountsList');
+    if (!accountsList) return;
+    
+    const accounts = getAdminAccounts();
+    const currentUser = getCurrentUser();
+    const userIsAdmin = isAdmin();
+    const accountsArray = Object.keys(accounts);
+    
+    if (accountsArray.length === 0) {
+        accountsList.innerHTML = '<p style="text-align: center; color: #666;">Chưa có tài khoản nào</p>';
+        return;
+    }
+    
+    accountsList.innerHTML = accountsArray.map(username => {
+        const account = accounts[username];
+        const createdAt = new Date(account.createdAt).toLocaleDateString('vi-VN');
+        const isCurrentUser = username === currentUser;
+        const isAccountAdmin = account.isAdmin === true;
+        
+        return `
+            <div class="account-item ${isCurrentUser ? 'current-user' : ''} ${isAccountAdmin ? 'admin-account' : ''}">
+                <div class="account-info">
+                    <strong>${username} ${isCurrentUser ? '(Bạn)' : ''} ${isAccountAdmin ? '👑' : ''}</strong>
+                    <small>Tạo ngày: ${createdAt} ${isAccountAdmin ? '| Admin' : ''}</small>
+                </div>
+                <div class="account-actions">
+                    ${userIsAdmin && !isCurrentUser ? `<button class="btn-change-password-other" onclick="changeOtherPassword('${username}')">Đổi MK</button>` : ''}
+                    ${userIsAdmin && !isCurrentUser && !isAccountAdmin ? `<button class="btn-delete-account" onclick="deleteAccount('${username}')">Xóa</button>` : ''}
+                </div>
+            </div>
+        `;
+    }).join('');
+}
+
+// Change password for other user (admin only)
+function changeOtherPassword(username) {
+    if (!isAdmin()) {
+        alert('Chỉ tài khoản admin mới có quyền đổi mật khẩu của tài khoản khác!');
+        return;
+    }
+    
+    const newPassword = prompt(`Nhập mật khẩu mới cho tài khoản "${username}":`);
+    if (!newPassword) return;
+    
+    if (newPassword.length < 6) {
+        alert('Mật khẩu phải có ít nhất 6 ký tự!');
+        return;
+    }
+    
+    const confirmPassword = prompt('Xác nhận mật khẩu mới:');
+    if (newPassword !== confirmPassword) {
+        alert('Mật khẩu xác nhận không khớp!');
+        return;
+    }
+    
+    const accounts = getAdminAccounts();
+    accounts[username].password = newPassword;
+    saveAdminAccounts(accounts);
+    
+    alert('Đổi mật khẩu thành công!');
+    loadAccountsList();
+}
+
+// Create new account (only admin)
+function createNewAccount() {
+    if (!isAdmin()) {
+        alert('Chỉ tài khoản admin mới có quyền tạo tài khoản mới!');
+        return;
+    }
+    
+    const username = document.getElementById('newAccountUsername').value.trim();
+    const password = document.getElementById('newAccountPassword').value;
+    
+    if (!username || !password) {
+        alert('Vui lòng điền đầy đủ thông tin!');
+        return;
+    }
+    
+    if (password.length < 6) {
+        alert('Mật khẩu phải có ít nhất 6 ký tự!');
+        return;
+    }
+    
+    const accounts = getAdminAccounts();
+    
+    if (accounts[username]) {
+        alert('Tên đăng nhập đã tồn tại!');
+        return;
+    }
+    
+    accounts[username] = {
+        password: password,
+        createdAt: new Date().toISOString(),
+        isAdmin: false
+    };
+    
+    saveAdminAccounts(accounts);
+    alert('Tạo tài khoản thành công!');
+    
+    document.getElementById('newAccountUsername').value = '';
+    document.getElementById('newAccountPassword').value = '';
+    loadAccountsList();
+}
+
+// Delete account (admin only)
+function deleteAccount(username) {
+    if (!isAdmin()) {
+        alert('Chỉ tài khoản admin mới có quyền xóa tài khoản!');
+        return;
+    }
+    
+    const currentUser = getCurrentUser();
+    const accounts = getAdminAccounts();
+    
+    if (username === currentUser) {
+        alert('Bạn không thể xóa tài khoản của chính mình!');
+        return;
+    }
+    
+    if (accounts[username] && accounts[username].isAdmin) {
+        alert('Không thể xóa tài khoản admin!');
+        return;
+    }
+    
+    if (!confirm(`Bạn có chắc chắn muốn xóa tài khoản "${username}"?`)) {
+        return;
+    }
+    
+    delete accounts[username];
+    saveAdminAccounts(accounts);
+    
+    alert('Xóa tài khoản thành công!');
+    loadAccountsList();
 }
 
 // Add new project
@@ -469,6 +828,8 @@ function addProject() {
     saveProjects();
     closeModal();
     loadAdminPage();
+    // Tự động cập nhật data.json
+    autoExportData();
     alert('Thêm dự án thành công!');
 }
 
@@ -552,6 +913,8 @@ function saveProject(id) {
     saveProjects();
     closeModal();
     loadAdminPage();
+    // Tự động cập nhật data.json
+    autoExportData();
     alert('Cập nhật dự án thành công!');
 }
 
@@ -561,11 +924,130 @@ function deleteProject(id) {
         projects = projects.filter(p => p.id !== id);
         saveProjects();
         loadAdminPage();
+        // Tự động cập nhật data.json
+        autoExportData();
         alert('Xóa dự án thành công!');
     }
 }
 
-// Export data to JSON file (includes images as base64)
+// Tự động export data.json (không hiển thị alert, chỉ download file)
+function autoExportData() {
+    // Chỉ tự động export khi đang ở trang admin
+    if (!document.getElementById('adminProjects')) {
+        return;
+    }
+    
+    // Debounce: Hủy timer cũ nếu có
+    if (autoExportTimer) {
+        clearTimeout(autoExportTimer);
+    }
+    
+    // Đợi 500ms trước khi export để tránh download quá nhiều lần khi có nhiều thay đổi liên tiếp
+    autoExportTimer = setTimeout(() => {
+        // Collect all images from localStorage
+        const imageData = {};
+        
+        projects.forEach(project => {
+            if (project.beforeImage && project.beforeImage.startsWith('project_image_')) {
+                const imageBase64 = localStorage.getItem(project.beforeImage);
+                if (imageBase64) {
+                    imageData[project.beforeImage] = imageBase64;
+                }
+            }
+            if (project.afterImage && project.afterImage.startsWith('project_image_')) {
+                const imageBase64 = localStorage.getItem(project.afterImage);
+                if (imageBase64) {
+                    imageData[project.afterImage] = imageBase64;
+                }
+            }
+        });
+        
+        // Create export object
+        const exportData = {
+            projects: projects,
+            images: imageData,
+            exportDate: new Date().toISOString(),
+            version: '1.0'
+        };
+        
+        // Create download với tên file cố định là data.json
+        const dataStr = JSON.stringify(exportData, null, 2);
+        const dataBlob = new Blob([dataStr], { type: 'application/json' });
+        const url = URL.createObjectURL(dataBlob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = 'data.json'; // Tên file cố định
+        link.style.display = 'none';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+        
+        // Hiển thị thông báo nhỏ ở góc màn hình thay vì alert
+        showAutoExportNotification();
+        
+        autoExportTimer = null;
+    }, 500);
+}
+
+// Hiển thị thông báo tự động export
+function showAutoExportNotification() {
+    // Xóa thông báo cũ nếu có
+    const existingNotification = document.getElementById('autoExportNotification');
+    if (existingNotification) {
+        existingNotification.remove();
+    }
+    
+    const notification = document.createElement('div');
+    notification.id = 'autoExportNotification';
+    notification.style.cssText = `
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        background: #4CAF50;
+        color: white;
+        padding: 12px 20px;
+        border-radius: 8px;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        z-index: 10000;
+        font-size: 14px;
+        animation: slideIn 0.3s ease-out;
+    `;
+    notification.innerHTML = `
+        <strong>✓ Đã tự động cập nhật data.json</strong><br>
+        <small>File đã được tải về, vui lòng upload lên GitHub</small>
+    `;
+    
+    // Thêm animation
+    const style = document.createElement('style');
+    style.textContent = `
+        @keyframes slideIn {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+    `;
+    if (!document.getElementById('autoExportNotificationStyle')) {
+        style.id = 'autoExportNotificationStyle';
+        document.head.appendChild(style);
+    }
+    
+    document.body.appendChild(notification);
+    
+    // Tự động ẩn sau 4 giây
+    setTimeout(() => {
+        notification.style.opacity = '0';
+        notification.style.transition = 'opacity 0.3s';
+        setTimeout(() => notification.remove(), 300);
+    }, 4000);
+}
+
+// Export data to JSON file (includes images as base64) - Manual export
 function exportData() {
     // Collect all images from localStorage
     const imageData = {};
@@ -719,6 +1201,9 @@ function closeModal() {
 
 // Initialize on page load
 document.addEventListener('DOMContentLoaded', async () => {
+    // Initialize admin accounts system
+    initAdminAccounts();
+    
     await loadProjects();
     
     // Check which page we're on
