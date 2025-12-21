@@ -1,188 +1,101 @@
-# Portfolio Thiết Kế Nội Thất
+# Trang Web Thiết Kế Nội Thất
 
-Trang web quảng bá các thiết kế nội thất với giao diện hiện đại và tinh tế.
+Trang web giới thiệu các dự án thiết kế nội thất với hiệu ứng reveal (before/after) chuyên nghiệp.
 
 ## Tính Năng
 
-- ✨ Giao diện hiện đại, responsive trên mọi thiết bị
-- 🎨 Màu sắc tinh tế phù hợp với thiết kế nội thất
-- 📸 Gallery hiển thị hình ảnh trước và sau khi thiết kế
-- 💼 Modal chi tiết với thông tin đầy đủ về từng dự án
-- 📱 Tối ưu cho mobile và tablet
+- ✨ Hiệu ứng reveal thanh dọc để so sánh hình ảnh trước và sau thiết kế
+- 🖼️ Upload và nén hình ảnh tự động
+- 📱 Responsive design, tương thích mobile
+- 🔐 Trang quản trị để thêm/sửa/xóa dự án
+- 💾 Export/Import dữ liệu để backup và deploy
 
-## Cấu Trúc Dự Án
+## Cài Đặt
+
+1. Clone repository:
+```bash
+git clone <your-repo-url>
+cd Trang_tri_noi_that_2
+```
+
+2. Mở `index.html` trong trình duyệt hoặc sử dụng local server:
+```bash
+# Sử dụng Python
+python -m http.server 8000
+
+# Hoặc sử dụng Node.js
+npx http-server
+```
+
+## Deploy Lên GitHub Pages
+
+### Bước 1: Chuẩn bị dữ liệu
+
+1. Mở trang web local và đăng nhập vào trang Admin (admin/admin)
+2. Thêm/sửa các dự án và upload hình ảnh
+3. Click nút **"📥 Export Dữ Liệu"** để tải file JSON về máy
+4. File JSON sẽ chứa tất cả dự án và hình ảnh (dạng base64)
+
+### Bước 2: Upload lên GitHub
+
+1. Tạo repository mới trên GitHub
+2. Upload các file HTML, CSS, JS vào repository
+3. Upload file `data.json` đã export vào thư mục gốc
+4. Vào Settings → Pages của repository
+5. Chọn branch `main` và folder `/ (root)`
+6. Click Save
+
+### Bước 3: Truy cập website
+
+Website sẽ có địa chỉ: `https://<username>.github.io/<repository-name>`
+
+## Cập Nhật Dữ Liệu
+
+Khi cần cập nhật dữ liệu sau khi đã deploy:
+
+1. Mở website đã deploy
+2. Đăng nhập vào trang Admin
+3. Thêm/sửa/xóa dự án
+4. Export dữ liệu mới
+5. Upload file `data.json` mới lên GitHub (thay thế file cũ)
+6. Commit và push lên GitHub
+
+## Cấu Trúc File
 
 ```
-Thiet_ke_noi_that/
-│
+Trang_tri_noi_that_2/
 ├── index.html          # Trang chủ
-├── styles.css          # File CSS chính
-├── script.js           # File JavaScript
-├── data.js             # Dữ liệu các dự án
-└── README.md           # File này
+├── detail.html         # Trang chi tiết dự án
+├── login.html          # Trang đăng nhập
+├── admin.html          # Trang quản trị
+├── style.css           # CSS styles
+├── script.js           # JavaScript logic
+├── data.json           # Dữ liệu dự án và hình ảnh (tự động load)
+└── README.md           # Hướng dẫn này
 ```
-
-## Chạy Trang Web Trên Máy Tính
-
-### Cách 1: Mở Trực Tiếp (Đơn Giản Nhất)
-
-1. Mở File Explorer và điều hướng đến thư mục `Thiet_ke_noi_that`
-2. Double-click vào file `index.html`
-3. Trang web sẽ mở trong trình duyệt mặc định của bạn
-
-**Lưu ý:** Một số tính năng có thể không hoạt động đầy đủ khi mở trực tiếp do chính sách CORS của trình duyệt.
-
-### Cách 2: Sử Dụng Local Server (Khuyến Nghị)
-
-#### Phương Pháp A: Sử Dụng Python (Nếu đã cài Python)
-
-1. Mở **PowerShell** hoặc **Command Prompt**
-2. Điều hướng đến thư mục dự án:
-   ```powershell
-   cd D:\Build-WEB\Thiet_ke_noi_that
-   ```
-3. Chạy lệnh sau:
-   ```powershell
-   # Python 3
-   python -m http.server 8000
-   
-   # Hoặc nếu python không hoạt động, thử:
-   py -m http.server 8000
-   ```
-4. Mở trình duyệt và truy cập: `http://localhost:8000`
-
-#### Phương Pháp B: Sử Dụng Node.js (Nếu đã cài Node.js)
-
-1. Cài đặt `http-server` (chỉ cần làm 1 lần):
-   ```powershell
-   npm install -g http-server
-   ```
-2. Mở PowerShell trong thư mục dự án:
-   ```powershell
-   cd D:\Build-WEB\Thiet_ke_noi_that
-   ```
-3. Chạy server:
-   ```powershell
-   http-server
-   ```
-4. Mở trình duyệt và truy cập địa chỉ hiển thị (thường là `http://localhost:8080`)
-
-#### Phương Pháp C: Sử Dụng Live Server Extension (VS Code)
-
-1. Cài đặt **VS Code** (nếu chưa có)
-2. Cài đặt extension **Live Server** trong VS Code
-3. Mở thư mục dự án trong VS Code
-4. Click chuột phải vào file `index.html`
-5. Chọn **Open with Live Server**
-
-### Cách 3: Sử Dụng File Batch (Tự Động)
-
-Tôi sẽ tạo file batch để bạn chỉ cần double-click là chạy được (xem phần dưới).
-
-## Cách Sử Dụng
-
-### 1. Chỉnh Sửa Dữ Liệu Dự Án
-
-Mở file `data.js` và chỉnh sửa mảng `projects` để thêm/sửa/xóa các dự án của bạn:
-
-```javascript
-{
-    id: 1,
-    title: "Tên dự án",
-    style: "Phong cách",
-    beforeImage: "URL hình ảnh trước",
-    afterImage: "URL hình ảnh sau",
-    description: "Mô tả dự án",
-    costItems: [
-        "Hạng mục 1",
-        "Hạng mục 2",
-        // ...
-    ],
-    totalCost: "Giá tiền"
-}
-```
-
-### 2. Thêm Hình Ảnh
-
-Bạn có thể:
-- Sử dụng URL từ các dịch vụ lưu trữ ảnh (Imgur, Cloudinary, etc.)
-- Tạo thư mục `images/` và thêm hình ảnh vào đó, sau đó sử dụng đường dẫn tương đối
-- Sử dụng GitHub để lưu trữ hình ảnh
-
-### 3. Tùy Chỉnh Màu Sắc
-
-Mở file `styles.css` và chỉnh sửa các biến CSS trong phần `:root`:
-
-```css
-:root {
-    --primary-color: #D4C4B0;      /* Màu chính */
-    --secondary-color: #8B7355;    /* Màu phụ */
-    --accent-color: #C9A96B;       /* Màu nhấn */
-    /* ... */
-}
-```
-
-## Deploy trên GitHub Pages
-
-### Bước 1: Tạo Repository trên GitHub
-
-1. Đăng nhập vào GitHub
-2. Tạo repository mới (ví dụ: `thiet-ke-noi-that`)
-3. Upload tất cả các file lên repository
-
-### Bước 2: Kích Hoạt GitHub Pages
-
-1. Vào **Settings** của repository (tab ở thanh menu trên)
-2. Click vào **Pages** ở sidebar bên trái (dưới mục "Code and automation")
-3. Trong phần **"Build and deployment"**:
-   - **Source:** Chọn **"Deploy from a branch"** từ dropdown đầu tiên
-   - **Branch:** 
-     - Click dropdown đang hiển thị **"None"**
-     - Chọn branch **"main"** (hoặc **"master"** nếu repository bạn dùng master)
-     - Ở dropdown bên cạnh, chọn **"/ (root)"** (thư mục gốc)
-   - Click nút **"Save"** (sẽ sáng lên sau khi bạn chọn branch)
-4. Đợi vài giây, bạn sẽ thấy thông báo màu xanh với link website của bạn
-
-**📌 Lưu ý:** Nếu không thấy branch trong dropdown, đảm bảo bạn đã commit và push code lên GitHub trước.
-
-### Bước 3: Truy Cập Website
-
-Sau vài phút, website của bạn sẽ có địa chỉ:
-```
-https://[username].github.io/[repository-name]
-```
-
-Ví dụ: `https://yourusername.github.io/thiet-ke-noi-that`
-
-## Tùy Chỉnh
-
-### Thay Đổi Thông Tin Liên Hệ
-
-Mở file `index.html` và tìm phần **Contact Section** để chỉnh sửa thông tin liên hệ.
-
-### Thay Đổi Nội Dung Giới Thiệu
-
-Mở file `index.html` và tìm phần **About Section** để chỉnh sửa nội dung.
-
-### Thêm Section Mới
-
-Bạn có thể thêm các section mới vào `index.html` và style chúng trong `styles.css`.
 
 ## Lưu Ý
 
-- Đảm bảo tất cả hình ảnh có kích thước phù hợp (khuyến nghị: 800x600px hoặc lớn hơn)
-- Tối ưu hóa hình ảnh trước khi upload để tăng tốc độ tải trang
-- Kiểm tra website trên nhiều trình duyệt khác nhau
-- Test trên mobile để đảm bảo responsive hoạt động tốt
+- **Hình ảnh**: Hình ảnh được tự động nén khi upload để giảm dung lượng
+- **LocalStorage**: Dữ liệu cũng được lưu trong localStorage làm backup
+- **data.json**: File này được ưu tiên load trước, sau đó mới đến localStorage
+- **Giới hạn**: localStorage có giới hạn ~5-10MB, nên với nhiều hình ảnh nên sử dụng data.json
+
+## Tài Khoản Admin
+
+- Username: `admin`
+- Password: `admin`
+
+⚠️ **Lưu ý bảo mật**: Trong môi trường production, nên thay đổi mật khẩu và sử dụng authentication thực sự.
 
 ## Hỗ Trợ
 
-Nếu bạn gặp vấn đề, hãy kiểm tra:
-- Console của trình duyệt (F12) để xem lỗi JavaScript
-- Đảm bảo tất cả file đã được upload đúng
-- Kiểm tra đường dẫn hình ảnh có đúng không
+Nếu gặp vấn đề, vui lòng kiểm tra:
+1. Console của trình duyệt (F12) để xem lỗi
+2. Đảm bảo file `data.json` tồn tại và đúng định dạng
+3. Kiểm tra đường dẫn file trong GitHub Pages
 
 ## License
 
-Dự án này được tạo cho mục đích quảng bá thiết kế nội thất.
+MIT License
 

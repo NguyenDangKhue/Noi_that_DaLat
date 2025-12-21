@@ -3,103 +3,69 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="Thiết kế nội thất chuyên nghiệp - Chuyển đổi không gian sống của bạn">
-    <title>Thiết Kế Nội Thất | Portfolio</title>
-    <link rel="stylesheet" href="styles.css">
+    <title>Thiết Kế Nội Thất Chuyên Nghiệp</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Montserrat:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <!-- Navigation -->
-    <nav class="navbar">
-        <div class="container">
-            <div class="nav-brand">
-                <h1>Interior Design</h1>
+    <!-- Header -->
+    <header class="header">
+        <nav class="navbar">
+            <div class="container">
+                <div class="logo">
+                    <h1>Interior Design</h1>
+                </div>
+                <ul class="nav-menu">
+                    <li><a href="#home">Trang Chủ</a></li>
+                    <li><a href="#projects">Dự Án</a></li>
+                    <li><a href="#about">Về Chúng Tôi</a></li>
+                    <li><a href="#contact">Liên Hệ</a></li>
+                    <li><a href="login.html" class="btn-login">Đăng Nhập</a></li>
+                </ul>
             </div>
-            <ul class="nav-menu">
-                <li><a href="#home">Trang chủ</a></li>
-                <li><a href="#portfolio">Portfolio</a></li>
-                <li><a href="#about">Giới thiệu</a></li>
-                <li><a href="#contact">Liên hệ</a></li>
-            </ul>
-            <button class="nav-toggle" aria-label="Toggle navigation">
-                <span></span>
-                <span></span>
-                <span></span>
-            </button>
-        </div>
-    </nav>
+        </nav>
+    </header>
 
     <!-- Hero Section -->
-    <section id="home" class="hero">
+    <section class="hero" id="home">
         <div class="hero-content">
-            <h2 class="hero-title">Biến Không Gian Thành Tác Phẩm Nghệ Thuật</h2>
-            <p class="hero-subtitle">Thiết kế nội thất chuyên nghiệp, tinh tế và đầy cảm hứng</p>
-            <a href="#portfolio" class="btn-primary">Xem Portfolio</a>
+            <h1 class="hero-title">Biến Không Gian Thành Tác Phẩm Nghệ Thuật</h1>
+            <p class="hero-subtitle">Thiết kế nội thất hiện đại, sang trọng và đầy cảm hứng</p>
+            <a href="#projects" class="btn-primary">Xem Dự Án</a>
         </div>
-        <div class="hero-overlay"></div>
     </section>
 
-    <!-- Portfolio Section -->
-    <section id="portfolio" class="portfolio">
+    <!-- Projects Section -->
+    <section class="projects-section" id="projects">
         <div class="container">
-            <div class="section-header">
-                <h2 class="section-title">Portfolio Thiết Kế</h2>
-                <p class="section-subtitle">Khám phá các dự án thiết kế nội thất của chúng tôi</p>
-            </div>
-            <div class="portfolio-grid" id="portfolioGrid">
-                <!-- Portfolio items will be dynamically loaded -->
+            <h2 class="section-title">Dự Án Của Chúng Tôi</h2>
+            <p class="section-subtitle">Khám phá sự chuyển đổi tuyệt vời từ không gian cũ sang không gian mới</p>
+            
+            <div class="projects-grid" id="projectsGrid">
+                <!-- Projects will be dynamically loaded here -->
             </div>
         </div>
     </section>
 
     <!-- About Section -->
-    <section id="about" class="about">
+    <section class="about-section" id="about">
         <div class="container">
+            <h2 class="section-title">Về Chúng Tôi</h2>
             <div class="about-content">
-                <h2 class="section-title">Về Chúng Tôi</h2>
-                <p>Chúng tôi chuyên tạo ra những không gian sống đẹp, tiện nghi và phản ánh đúng phong cách sống của bạn. Với nhiều năm kinh nghiệm trong lĩnh vực thiết kế nội thất, chúng tôi cam kết mang đến những giải pháp thiết kế độc đáo và chất lượng cao.</p>
-                <div class="about-features">
-                    <div class="feature">
-                        <h3>Thiết Kế Tùy Chỉnh</h3>
-                        <p>Mỗi dự án được thiết kế riêng theo nhu cầu và sở thích của khách hàng</p>
-                    </div>
-                    <div class="feature">
-                        <h3>Chất Lượng Cao</h3>
-                        <p>Sử dụng vật liệu và đồ nội thất chất lượng tốt nhất</p>
-                    </div>
-                    <div class="feature">
-                        <h3>Dịch Vụ Trọn Gói</h3>
-                        <p>Từ thiết kế đến thi công, chúng tôi đồng hành cùng bạn</p>
-                    </div>
-                </div>
+                <p>Chúng tôi là đội ngũ chuyên gia thiết kế nội thất với nhiều năm kinh nghiệm, cam kết mang đến những không gian sống đẹp và tiện nghi nhất cho khách hàng.</p>
             </div>
         </div>
     </section>
 
     <!-- Contact Section -->
-    <section id="contact" class="contact">
+    <section class="contact-section" id="contact">
         <div class="container">
-            <div class="section-header">
-                <h2 class="section-title">Liên Hệ</h2>
-                <p class="section-subtitle">Hãy liên hệ với chúng tôi để được tư vấn miễn phí</p>
-            </div>
+            <h2 class="section-title">Liên Hệ</h2>
             <div class="contact-content">
-                <div class="contact-info">
-                    <div class="contact-item">
-                        <h3>Email</h3>
-                        <p>info@interiordesign.com</p>
-                    </div>
-                    <div class="contact-item">
-                        <h3>Điện thoại</h3>
-                        <p>+84 123 456 789</p>
-                    </div>
-                    <div class="contact-item">
-                        <h3>Địa chỉ</h3>
-                        <p>123 Đường ABC, Quận XYZ, TP.HCM</p>
-                    </div>
-                </div>
+                <p>Email: info@interiordesign.com</p>
+                <p>Điện thoại: 0123 456 789</p>
             </div>
         </div>
     </section>
@@ -108,24 +74,9 @@
     <footer class="footer">
         <div class="container">
             <p>&copy; 2024 Interior Design. All rights reserved.</p>
-            <p style="margin-top: 0.5rem; font-size: 0.85rem;">
-                <a href="admin-login.html" style="color: rgba(255, 255, 255, 0.7); text-decoration: none;">Đăng nhập Admin</a>
-            </p>
         </div>
     </footer>
 
-    <!-- Modal for Project Details -->
-    <div id="projectModal" class="modal">
-        <div class="modal-content">
-            <span class="modal-close">&times;</span>
-            <div id="modalBody">
-                <!-- Modal content will be dynamically loaded -->
-            </div>
-        </div>
-    </div>
-
-    <script src="data.js"></script>
-    <script src="image-compress.js"></script>
     <script src="script.js"></script>
 </body>
 </html>
