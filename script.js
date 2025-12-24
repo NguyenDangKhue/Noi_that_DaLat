@@ -122,6 +122,12 @@ async function loadProjects() {
                         console.warn('⚠️ data.json không có phần images hoặc không hợp lệ');
                     }
                     
+                    // Import hashtags if they exist
+                    if (data.hashtags && typeof data.hashtags === 'object') {
+                        saveHashtags(data.hashtags);
+                        console.log(`✅ Đã import hashtags từ data.json vào localStorage`);
+                    }
+                    
                     // Also save to localStorage as backup (không trigger auto-export vì isLoadingData = true)
                     localStorage.setItem('projects', JSON.stringify(projects));
                     isLoadingData = false;
@@ -150,6 +156,19 @@ async function loadProjects() {
         }
     } else {
         console.log('📋 Sử dụng dữ liệu mặc định từ script.js');
+    }
+    
+    // Ensure hashtags are loaded from localStorage (they should already be there from previous sessions)
+    const existingHashtags = localStorage.getItem('adminHashtags');
+    if (existingHashtags) {
+        try {
+            const hashtags = JSON.parse(existingHashtags);
+            console.log(`✅ Đã tải hashtags từ localStorage: ${hashtags.roomTypes.length} loại phòng, ${hashtags.styles.length} phong cách`);
+        } catch (error) {
+            console.error('❌ Lỗi khi parse hashtags từ localStorage:', error);
+        }
+    } else {
+        console.log('⚠️ Chưa có hashtags trong localStorage. Vui lòng tạo hashtags trong admin panel.');
     }
     
     isLoadingData = false; // Hoàn tất load dữ liệu
@@ -439,7 +458,15 @@ function extractRoomType(project) {
 function getAdminHashtags() {
     const saved = localStorage.getItem('adminHashtags');
     if (saved) {
-        return JSON.parse(saved);
+        try {
+            return JSON.parse(saved);
+        } catch (e) {
+            console.error('Error parsing adminHashtags:', e);
+            return {
+                roomTypes: [],
+                styles: []
+            };
+        }
     }
     // Return empty arrays if no hashtags created yet
     return {
@@ -499,10 +526,10 @@ async function renderProjects(filteredProjects = null) {
         const roomTypeTag = `<span class="hashtag hashtag-room">#${roomType}</span>`;
         
         return `
-        <div class="project-card" data-styles="${displayStyles.join(',')}" data-room-type="${roomType}">
+        <div class="project-card" data-project-id="${project.id}" data-styles="${displayStyles.join(',')}" data-room-type="${roomType}">
             <div class="project-image-container">
-                <img src="${getImageSrcSync(project.beforeImage)}" alt="Before" class="project-image-before" onerror="this.src='data:image/svg+xml,%3Csvg xmlns=\\'http://www.w3.org/2000/svg\\' width=\\'400\\' height=\\'300\\'%3E%3Crect fill=\\'%23ddd\\' width=\\'400\\' height=\\'300\\'/%3E%3Ctext fill=\\'%23999\\' font-family=\\'sans-serif\\' font-size=\\'18\\' x=\\'50%25\\' y=\\'50%25\\' text-anchor=\\'middle\\' dy=\\'.3em\\'%3EĐang tải...%3C/text%3E%3C/svg%3E'; this.onerror=null;">
-                <img src="${getImageSrcSync(project.afterImage)}" alt="After" class="project-image-after" onerror="this.src='data:image/svg+xml,%3Csvg xmlns=\\'http://www.w3.org/2000/svg\\' width=\\'400\\' height=\\'300\\'%3E%3Crect fill=\\'%23ddd\\' width=\\'400\\' height=\\'300\\'/%3E%3Ctext fill=\\'%23999\\' font-family=\\'sans-serif\\' font-size=\\'18\\' x=\\'50%25\\' y=\\'50%25\\' text-anchor=\\'middle\\' dy=\\'.3em\\'%3EĐang tải...%3C/text%3E%3C/svg%3E'; this.onerror=null;">
+                <img src="${getImageSrcSync(project.beforeImage)}" alt="Before" class="project-image-before" data-project-id="${project.id}" onerror="this.src='data:image/svg+xml,%3Csvg xmlns=\\'http://www.w3.org/2000/svg\\' width=\\'400\\' height=\\'300\\'%3E%3Crect fill=\\'%23ddd\\' width=\\'400\\' height=\\'300\\'/%3E%3Ctext fill=\\'%23999\\' font-family=\\'sans-serif\\' font-size=\\'18\\' x=\\'50%25\\' y=\\'50%25\\' text-anchor=\\'middle\\' dy=\\'.3em\\'%3EĐang tải...%3C/text%3E%3C/svg%3E'; this.onerror=null;">
+                <img src="${getImageSrcSync(project.afterImage)}" alt="After" class="project-image-after" data-project-id="${project.id}" onerror="this.src='data:image/svg+xml,%3Csvg xmlns=\\'http://www.w3.org/2000/svg\\' width=\\'400\\' height=\\'300\\'%3E%3Crect fill=\\'%23ddd\\' width=\\'400\\' height=\\'300\\'/%3E%3Ctext fill=\\'%23999\\' font-family=\\'sans-serif\\' font-size=\\'18\\' x=\\'50%25\\' y=\\'50%25\\' text-anchor=\\'middle\\' dy=\\'.3em\\'%3EĐang tải...%3C/text%3E%3C/svg%3E'; this.onerror=null;">
                 <div class="reveal-slider"></div>
             </div>
                 <div class="project-info" onclick="viewProjectDetail(${project.id})" style="cursor: pointer;">
@@ -522,20 +549,25 @@ async function renderProjects(filteredProjects = null) {
     }).join('');
     
     // Update images after initial render (for async loading)
-    for (let i = 0; i < projects.length; i++) {
-        const project = projects[i];
-        const card = projectsGrid.children[i];
+    // Use project ID to match instead of index to avoid image jumping
+    for (const project of projectsToRender) {
+        const card = projectsGrid.querySelector(`[data-project-id="${project.id}"]`);
         if (card) {
+            // Find images within this specific card to avoid matching wrong images
             const beforeImg = card.querySelector('.project-image-before');
             const afterImg = card.querySelector('.project-image-after');
             
             if (beforeImg && project.beforeImage) {
                 const src = await getImageSrc(project.beforeImage);
-                if (src) beforeImg.src = src;
+                if (src && beforeImg.getAttribute('data-project-id') === String(project.id)) {
+                    beforeImg.src = src;
+                }
             }
             if (afterImg && project.afterImage) {
                 const src = await getImageSrc(project.afterImage);
-                if (src) afterImg.src = src;
+                if (src && afterImg.getAttribute('data-project-id') === String(project.id)) {
+                    afterImg.src = src;
+                }
             }
         }
     }
@@ -1554,10 +1586,20 @@ function deleteHashtag(type, index) {
     displayHashtags(hashtags);
     updateHashtagDropdowns(hashtags);
     
+    // Auto-export to data.json to persist hashtags
+    if (typeof autoExportData === 'function') {
+        autoExportData();
+    }
+    
     // Refresh hashtag section if it's visible
     const hashtagSection = document.getElementById('hashtagSection');
     if (hashtagSection && hashtagSection.style.display !== 'none') {
         displayHashtags(hashtags);
+    }
+    
+    // Refresh filters on homepage if available
+    if (document.getElementById('filterContainer')) {
+        renderFilters();
     }
 }
 
@@ -1597,6 +1639,21 @@ function saveHashtag() {
     saveHashtags(hashtags);
     displayHashtags(hashtags);
     updateHashtagDropdowns(hashtags);
+    
+    // Auto-export to data.json to persist hashtags
+    // Always try to export, even if not on admin page
+    try {
+        if (typeof autoExportData === 'function') {
+            autoExportData();
+        } else {
+            // If autoExportData not available, manually export hashtags
+            // This ensures hashtags are saved even when not on admin page
+            console.log('⚠️ autoExportData not available, hashtags saved to localStorage only');
+        }
+    } catch (error) {
+        console.error('Error exporting hashtags:', error);
+    }
+    
     closeHashtagModal();
     alert('Đã lưu hashtag thành công!');
     
@@ -1604,6 +1661,11 @@ function saveHashtag() {
     const hashtagSection = document.getElementById('hashtagSection');
     if (hashtagSection && hashtagSection.style.display !== 'none') {
         displayHashtags(hashtags);
+    }
+    
+    // Refresh filters on homepage if available
+    if (document.getElementById('filterContainer')) {
+        renderFilters();
     }
 }
 
@@ -2019,10 +2081,14 @@ async function autoExportData() {
             }
         });
         
+        // Get hashtags from localStorage
+        const hashtags = getHashtags();
+        
         // Create export object
         const exportData = {
             projects: projects,
             images: imageData,
+            hashtags: hashtags,
             exportDate: new Date().toISOString(),
             version: '1.0'
         };
@@ -2233,10 +2299,16 @@ function importData(event) {
             projects = importedData.projects;
             saveProjects();
             
+            // Import hashtags if they exist
+            if (importedData.hashtags && typeof importedData.hashtags === 'object') {
+                saveHashtags(importedData.hashtags);
+                console.log(`✅ Đã import hashtags vào localStorage`);
+            }
+            
             // Reload admin page
             loadAdminPage();
             
-            alert(`Import thành công!\n- ${projects.length} dự án\n- ${importedData.images ? Object.keys(importedData.images).length : 0} hình ảnh`);
+            alert(`Import thành công!\n- ${projects.length} dự án\n- ${importedData.images ? Object.keys(importedData.images).length : 0} hình ảnh\n- ${importedData.hashtags ? 'Hashtag đã được import' : 'Không có hashtag'}`);
             
         } catch (error) {
             console.error('Lỗi khi import:', error);
@@ -2409,6 +2481,13 @@ document.addEventListener('DOMContentLoaded', async () => {
     
     // Check which page we're on
     if (document.getElementById('projectsGrid')) {
+        // Ensure hashtags are loaded before rendering filters
+        const hashtags = getHashtags();
+        if (hashtags && (hashtags.roomTypes.length > 0 || hashtags.styles.length > 0)) {
+            console.log('✅ Hashtags loaded for filters:', hashtags);
+        } else {
+            console.warn('⚠️ No hashtags found. Filters will be empty. Please create hashtags in admin panel.');
+        }
         renderFilters();
         renderProjects();
     } else if (document.querySelector('.detail-container')) {
