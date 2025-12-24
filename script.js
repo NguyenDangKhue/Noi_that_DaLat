@@ -1363,8 +1363,92 @@ function closeModal() {
     document.getElementById('projectModal').classList.remove('active');
 }
 
+// Mobile Navigation Toggle
+function initMobileNav() {
+    const navToggle = document.getElementById('navToggle');
+    const navMenu = document.getElementById('navMenu');
+    
+    if (navToggle && navMenu) {
+        navToggle.addEventListener('click', () => {
+            navToggle.classList.toggle('active');
+            navMenu.classList.toggle('active');
+        });
+
+        // Close menu when clicking on a link
+        const navLinks = navMenu.querySelectorAll('a');
+        navLinks.forEach(link => {
+            link.addEventListener('click', () => {
+                navToggle.classList.remove('active');
+                navMenu.classList.remove('active');
+            });
+        });
+
+        // Close menu when clicking outside
+        document.addEventListener('click', (e) => {
+            if (!navToggle.contains(e.target) && !navMenu.contains(e.target)) {
+                navToggle.classList.remove('active');
+                navMenu.classList.remove('active');
+            }
+        });
+
+        // Close menu on scroll (mobile)
+        let lastScrollTop = 0;
+        window.addEventListener('scroll', () => {
+            const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+            if (Math.abs(scrollTop - lastScrollTop) > 10) {
+                navToggle.classList.remove('active');
+                navMenu.classList.remove('active');
+            }
+            lastScrollTop = scrollTop;
+        }, { passive: true });
+    }
+}
+
+// Collapsible Sections for Mobile
+function initCollapsibleSections() {
+    const sectionToggles = document.querySelectorAll('.section-toggle');
+    
+    sectionToggles.forEach(toggle => {
+        toggle.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const header = toggle.closest('.section-header-toggle');
+            const section = header.closest('section');
+            const content = section.querySelector('.collapsible-content');
+            
+            if (content) {
+                const isActive = content.classList.contains('active');
+                
+                if (isActive) {
+                    content.classList.remove('active');
+                    toggle.classList.remove('active');
+                } else {
+                    content.classList.add('active');
+                    toggle.classList.add('active');
+                }
+            }
+        });
+
+        // Also allow clicking on the header to toggle
+        const header = toggle.closest('.section-header-toggle');
+        if (header) {
+            header.addEventListener('click', (e) => {
+                // Only trigger if clicking on header, not on toggle button (to avoid double trigger)
+                if (e.target === header || e.target.closest('.section-title')) {
+                    toggle.click();
+                }
+            });
+        }
+    });
+}
+
 // Initialize on page load
 document.addEventListener('DOMContentLoaded', async () => {
+    // Initialize mobile navigation
+    initMobileNav();
+    
+    // Initialize collapsible sections
+    initCollapsibleSections();
+    
     // Initialize admin accounts system
     initAdminAccounts();
     

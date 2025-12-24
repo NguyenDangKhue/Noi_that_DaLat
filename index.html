@@ -15,9 +15,14 @@
         <nav class="navbar">
             <div class="container">
                 <div class="logo">
-                    <h1>Interior Design</h1>
+                    <h1>Thiết kế, cải tạo nội thất</h1>
                 </div>
-                <ul class="nav-menu">
+                <button class="nav-toggle" id="navToggle" aria-label="Toggle navigation">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </button>
+                <ul class="nav-menu" id="navMenu">
                     <li><a href="#home">Trang Chủ</a></li>
                     <li><a href="#projects">Dự Án</a></li>
                     <li><a href="#about">Về Chúng Tôi</a></li>
@@ -31,8 +36,8 @@
     <!-- Hero Section -->
     <section class="hero" id="home">
         <div class="hero-content">
-            <h1 class="hero-title">Biến Không Gian Thành Tác Phẩm Nghệ Thuật</h1>
-            <p class="hero-subtitle">Thiết kế nội thất hiện đại, sang trọng và đầy cảm hứng</p>
+            <h1 class="hero-title">Thiết kế, cải tạo không gian sống theo cách của bạn</h1>
+            <p class="hero-subtitle">Chúng tôi nhận làm từ những căn phòng nhỏ nhất</p>
             <a href="#projects" class="btn-primary">Xem Dự Án</a>
         </div>
     </section>
@@ -52,9 +57,17 @@
     <!-- About Section -->
     <section class="about-section" id="about">
         <div class="container">
-            <h2 class="section-title">Về Chúng Tôi</h2>
-            <div class="about-content">
-                <p>Chúng tôi là đội ngũ chuyên gia thiết kế nội thất với nhiều năm kinh nghiệm, cam kết mang đến những không gian sống đẹp và tiện nghi nhất cho khách hàng.</p>
+            <div class="section-header-toggle">
+                <h2 class="section-title">Về Chúng Tôi</h2>
+                <button class="section-toggle" aria-label="Toggle section">
+                    <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                </button>
+            </div>
+            <div class="about-content collapsible-content">
+                <p>Chúng tôi chuyên thiết kế và cải tạo những căn phòng cũ, lỗi thời. Chúng tôi sẽ cùng bạn thiết kế căn phòng trong mơ, thay đổi phong cách, nâng tầm trải nghiệm cuộc sống.</p>
+                <p>Với kinh phí hạn hẹp, chúng tôi vẫn có thể giúp bạn tân trang lại căn phòng, thay đổi không gian sống.</p>
             </div>
         </div>
     </section>
@@ -62,8 +75,15 @@
     <!-- Contact Section -->
     <section class="contact-section" id="contact">
         <div class="container">
-            <h2 class="section-title">Liên Hệ</h2>
-            <div class="contact-content">
+            <div class="section-header-toggle">
+                <h2 class="section-title">Liên Hệ</h2>
+                <button class="section-toggle" aria-label="Toggle section">
+                    <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                </button>
+            </div>
+            <div class="contact-content collapsible-content">
                 <p>Email: info@interiordesign.com</p>
                 <p>Điện thoại: 0123 456 789</p>
             </div>
