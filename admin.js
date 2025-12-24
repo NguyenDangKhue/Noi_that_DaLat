@@ -1,11 +1,38 @@
 // Admin Authentication and Management System
 
-// Default admin credentials (can be changed in settings)
-const DEFAULT_ADMIN_USERNAME = 'admin';
-const DEFAULT_ADMIN_PASSWORD = 'admin123';
+// Initialize admin accounts system (same as script.js)
+function initAdminAccounts() {
+    if (!localStorage.getItem('adminAccounts')) {
+        // Create default admin account
+        const defaultAccounts = {
+            'admin': {
+                password: 'admin',
+                createdAt: new Date().toISOString(),
+                isAdmin: true
+            }
+        };
+        localStorage.setItem('adminAccounts', JSON.stringify(defaultAccounts));
+    } else {
+        // Ensure admin account has isAdmin flag
+        const accounts = JSON.parse(localStorage.getItem('adminAccounts'));
+        if (accounts['admin'] && !accounts['admin'].isAdmin) {
+            accounts['admin'].isAdmin = true;
+            localStorage.setItem('adminAccounts', JSON.stringify(accounts));
+        }
+    }
+}
+
+// Get admin accounts
+function getAdminAccounts() {
+    const accounts = localStorage.getItem('adminAccounts');
+    return accounts ? JSON.parse(accounts) : {};
+}
 
 // Initialize admin system
 function initAdmin() {
+    // Initialize admin accounts system
+    initAdminAccounts();
+    
     // Check if we're on login page
     if (document.getElementById('loginForm')) {
         initLogin();
@@ -23,20 +50,26 @@ function initLogin() {
     const loginForm = document.getElementById('loginForm');
     const loginError = document.getElementById('loginError');
     
-    // Load admin credentials from localStorage or use defaults
-    const adminUsername = localStorage.getItem('adminUsername') || DEFAULT_ADMIN_USERNAME;
-    const adminPassword = localStorage.getItem('adminPassword') || DEFAULT_ADMIN_PASSWORD;
-    
     loginForm.addEventListener('submit', (e) => {
         e.preventDefault();
         
-        const username = document.getElementById('username').value;
+        const username = document.getElementById('username').value.trim();
         const password = document.getElementById('password').value;
         
-        if (username === adminUsername && password === adminPassword) {
-            // Create session
+        if (!username || !password) {
+            loginError.textContent = 'Vui lòng điền đầy đủ thông tin!';
+            loginError.style.display = 'block';
+            return;
+        }
+        
+        const accounts = getAdminAccounts();
+        
+        if (accounts[username] && accounts[username].password === password) {
+            // Create session (compatible with both systems)
             sessionStorage.setItem('adminLoggedIn', 'true');
             sessionStorage.setItem('adminLoginTime', Date.now().toString());
+            localStorage.setItem('isLoggedIn', 'true');
+            localStorage.setItem('currentUser', username);
             
             // Redirect to admin panel
             window.location.href = 'admin-panel.html';
@@ -47,24 +80,36 @@ function initLogin() {
     });
 }
 
-// Check authentication
+// Check authentication (compatible with both systems)
 function checkAuth() {
-    const isLoggedIn = sessionStorage.getItem('adminLoggedIn');
-    const loginTime = sessionStorage.getItem('adminLoginTime');
+    // Check both sessionStorage (admin.js) and localStorage (script.js)
+    const sessionLoggedIn = sessionStorage.getItem('adminLoggedIn');
+    const localStorageLoggedIn = localStorage.getItem('isLoggedIn');
+    const currentUser = localStorage.getItem('currentUser');
     
-    // Check if session is valid (24 hours)
-    if (!isLoggedIn || !loginTime) {
-        redirectToLogin();
+    // Accept either authentication method
+    if ((sessionLoggedIn || localStorageLoggedIn) && currentUser) {
+        // Check session time if using sessionStorage
+        if (sessionLoggedIn) {
+            const loginTime = sessionStorage.getItem('adminLoginTime');
+            if (loginTime) {
+                const sessionDuration = 24 * 60 * 60 * 1000; // 24 hours
+                if (Date.now() - parseInt(loginTime) > sessionDuration) {
+                    sessionStorage.removeItem('adminLoggedIn');
+                    sessionStorage.removeItem('adminLoginTime');
+                    localStorage.removeItem('isLoggedIn');
+                    localStorage.removeItem('currentUser');
+                    redirectToLogin();
+                    return;
+                }
+            }
+        }
+        // Authentication valid
         return;
     }
     
-    const sessionDuration = 24 * 60 * 60 * 1000; // 24 hours
-    if (Date.now() - parseInt(loginTime) > sessionDuration) {
-        sessionStorage.removeItem('adminLoggedIn');
-        sessionStorage.removeItem('adminLoginTime');
-        redirectToLogin();
-        return;
-    }
+    // No valid authentication found
+    redirectToLogin();
 }
 
 // Redirect to login
@@ -72,10 +117,12 @@ function redirectToLogin() {
     window.location.href = 'admin-login.html';
 }
 
-// Logout functionality
+// Logout functionality (clear both systems)
 function logout() {
     sessionStorage.removeItem('adminLoggedIn');
     sessionStorage.removeItem('adminLoginTime');
+    localStorage.removeItem('isLoggedIn');
+    localStorage.removeItem('currentUser');
     window.location.href = 'admin-login.html';
 }
 
@@ -104,6 +151,9 @@ function initAdminPanel() {
     
     // Settings form
     initSettingsForm();
+    
+    // Hashtag management
+    initHashtagManagement();
 }
 
 // Navigation
@@ -174,9 +224,23 @@ function displayProjects(projects) {
 
 // Add new project
 function addProject() {
+    // Update hashtag dropdowns before adding
+    const hashtags = getHashtags();
+    updateHashtagDropdowns(hashtags);
+    
     document.getElementById('modalTitle').textContent = 'Thêm Dự Án Mới';
     document.getElementById('projectForm').reset();
     document.getElementById('projectId').value = '';
+    
+    // Clear hashtag selections
+    const roomTypeSelect = document.getElementById('projectRoomType');
+    const stylesSelect = document.getElementById('projectHashtagStyles');
+    if (roomTypeSelect) roomTypeSelect.value = '';
+    if (stylesSelect) {
+        Array.from(stylesSelect.options).forEach(option => {
+            option.selected = false;
+        });
+    }
     
     // Clear previews
     document.getElementById('beforeImagePreview').innerHTML = '';
@@ -196,6 +260,10 @@ function editProject(projectId) {
     
     if (!project) return;
     
+    // Update hashtag dropdowns before editing
+    const hashtags = getHashtags();
+    updateHashtagDropdowns(hashtags);
+    
     document.getElementById('modalTitle').textContent = 'Chỉnh Sửa Dự Án';
     document.getElementById('projectId').value = project.id;
     document.getElementById('projectTitle').value = project.title;
@@ -205,6 +273,22 @@ function editProject(projectId) {
     document.getElementById('projectAfterImage').value = project.afterImage;
     document.getElementById('projectTotalCost').value = project.totalCost;
     document.getElementById('projectCostItems').value = project.costItems.join('\n');
+    
+    // Set hashtag values
+    if (project.hashtags) {
+        const roomTypeSelect = document.getElementById('projectRoomType');
+        const stylesSelect = document.getElementById('projectHashtagStyles');
+        
+        if (roomTypeSelect && project.hashtags.roomType) {
+            roomTypeSelect.value = project.hashtags.roomType;
+        }
+        
+        if (stylesSelect && project.hashtags.styles && Array.isArray(project.hashtags.styles)) {
+            Array.from(stylesSelect.options).forEach(option => {
+                option.selected = project.hashtags.styles.includes(option.value);
+            });
+        }
+    }
     
     // Show previews if images are base64
     if (project.beforeImage && project.beforeImage.startsWith('data:')) {
@@ -458,6 +542,12 @@ function saveProject() {
     
     const costItems = costItemsText.split('\n').filter(item => item.trim() !== '');
     
+    // Get hashtag values
+    const roomTypeSelect = document.getElementById('projectRoomType');
+    const stylesSelect = document.getElementById('projectHashtagStyles');
+    const roomType = roomTypeSelect ? roomTypeSelect.value : '';
+    const selectedStyles = stylesSelect ? Array.from(stylesSelect.selectedOptions).map(opt => opt.value) : [];
+    
     let projects = JSON.parse(localStorage.getItem('adminProjects')) || window.projects || [];
     
     if (projectId) {
@@ -472,7 +562,11 @@ function saveProject() {
                 beforeImage,
                 afterImage,
                 totalCost,
-                costItems
+                costItems,
+                hashtags: {
+                    roomType: roomType || null,
+                    styles: selectedStyles.length > 0 ? selectedStyles : null
+                }
             };
         }
     } else {
@@ -486,7 +580,11 @@ function saveProject() {
             beforeImage,
             afterImage,
             totalCost,
-            costItems
+            costItems,
+            hashtags: {
+                roomType: roomType || null,
+                styles: selectedStyles.length > 0 ? selectedStyles : null
+            }
         });
     }
     
@@ -532,10 +630,211 @@ function initContactForm() {
     }
 }
 
+// Hashtag Management Functions
+function initHashtagManagement() {
+    // Load and display hashtags
+    loadHashtags();
+    
+    // Add hashtag button
+    const addHashtagBtn = document.getElementById('addHashtagBtn');
+    if (addHashtagBtn) {
+        addHashtagBtn.addEventListener('click', addHashtag);
+    }
+    
+    // Hashtag form
+    const hashtagForm = document.getElementById('hashtagForm');
+    if (hashtagForm) {
+        hashtagForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            saveHashtag();
+        });
+    }
+    
+    // Close hashtag modal
+    const hashtagModal = document.getElementById('hashtagModal');
+    const closeBtn = hashtagModal?.querySelector('.modal-close');
+    if (closeBtn) {
+        closeBtn.addEventListener('click', closeHashtagModal);
+    }
+    
+    window.addEventListener('click', (e) => {
+        if (e.target === hashtagModal) {
+            closeHashtagModal();
+        }
+    });
+}
+
+// Load hashtags from localStorage
+function loadHashtags() {
+    const hashtags = getHashtags();
+    displayHashtags(hashtags);
+    updateHashtagDropdowns(hashtags);
+}
+
+// Get hashtags from localStorage
+function getHashtags() {
+    const saved = localStorage.getItem('adminHashtags');
+    if (saved) {
+        return JSON.parse(saved);
+    }
+    // Default hashtags
+    return {
+        roomTypes: ['Phòng Khách', 'Phòng Ngủ', 'Nhà Bếp', 'Phòng Tắm', 'Phòng Làm Việc'],
+        styles: ['Hiện đại', 'Tối giản', 'Scandinavian', 'Cổ điển', 'Sang trọng']
+    };
+}
+
+// Save hashtags to localStorage
+function saveHashtags(hashtags) {
+    localStorage.setItem('adminHashtags', JSON.stringify(hashtags));
+}
+
+// Display hashtags
+function displayHashtags(hashtags) {
+    const roomTypesList = document.getElementById('roomTypesList');
+    const stylesList = document.getElementById('stylesList');
+    
+    if (roomTypesList) {
+        roomTypesList.innerHTML = hashtags.roomTypes.map((tag, index) => `
+            <div class="hashtag-item">
+                <span>${tag}</span>
+                <div class="hashtag-actions">
+                    <button class="btn-edit-small" onclick="editHashtag('roomType', ${index})">✏️</button>
+                    <button class="btn-delete-small" onclick="deleteHashtag('roomType', ${index})">🗑️</button>
+                </div>
+            </div>
+        `).join('');
+    }
+    
+    if (stylesList) {
+        stylesList.innerHTML = hashtags.styles.map((tag, index) => `
+            <div class="hashtag-item">
+                <span>${tag}</span>
+                <div class="hashtag-actions">
+                    <button class="btn-edit-small" onclick="editHashtag('style', ${index})">✏️</button>
+                    <button class="btn-delete-small" onclick="deleteHashtag('style', ${index})">🗑️</button>
+                </div>
+            </div>
+        `).join('');
+    }
+}
+
+// Update hashtag dropdowns in project form
+function updateHashtagDropdowns(hashtags) {
+    const roomTypeSelect = document.getElementById('projectRoomType');
+    const stylesSelect = document.getElementById('projectHashtagStyles');
+    
+    if (roomTypeSelect) {
+        roomTypeSelect.innerHTML = '<option value="">-- Chọn loại phòng --</option>' +
+            hashtags.roomTypes.map(tag => `<option value="${tag}">${tag}</option>`).join('');
+    }
+    
+    if (stylesSelect) {
+        stylesSelect.innerHTML = hashtags.styles.map(tag => 
+            `<option value="${tag}">${tag}</option>`
+        ).join('');
+    }
+}
+
+// Add new hashtag
+function addHashtag() {
+    document.getElementById('hashtagModalTitle').textContent = 'Thêm Hashtag Mới';
+    document.getElementById('hashtagForm').reset();
+    document.getElementById('hashtagType').value = '';
+    document.getElementById('hashtagName').value = '';
+    document.getElementById('hashtagForm').dataset.editIndex = '';
+    document.getElementById('hashtagForm').dataset.editType = '';
+    document.getElementById('hashtagModal').classList.add('active');
+}
+
+// Edit hashtag
+function editHashtag(type, index) {
+    const hashtags = getHashtags();
+    const tagArray = type === 'roomType' ? hashtags.roomTypes : hashtags.styles;
+    
+    document.getElementById('hashtagModalTitle').textContent = 'Sửa Hashtag';
+    document.getElementById('hashtagType').value = type === 'roomType' ? 'roomType' : 'style';
+    document.getElementById('hashtagName').value = tagArray[index];
+    document.getElementById('hashtagForm').dataset.editIndex = index;
+    document.getElementById('hashtagForm').dataset.editType = type;
+    document.getElementById('hashtagType').disabled = true; // Can't change type when editing
+    document.getElementById('hashtagModal').classList.add('active');
+}
+
+// Delete hashtag
+function deleteHashtag(type, index) {
+    if (!confirm('Bạn có chắc chắn muốn xóa hashtag này?')) return;
+    
+    const hashtags = getHashtags();
+    if (type === 'roomType') {
+        hashtags.roomTypes.splice(index, 1);
+    } else {
+        hashtags.styles.splice(index, 1);
+    }
+    
+    saveHashtags(hashtags);
+    loadHashtags();
+}
+
+// Save hashtag
+function saveHashtag() {
+    const type = document.getElementById('hashtagType').value;
+    const name = document.getElementById('hashtagName').value.trim();
+    const editIndex = document.getElementById('hashtagForm').dataset.editIndex;
+    const editType = document.getElementById('hashtagForm').dataset.editType;
+    
+    if (!type || !name) {
+        alert('Vui lòng điền đầy đủ thông tin!');
+        return;
+    }
+    
+    const hashtags = getHashtags();
+    const tagArray = type === 'roomType' ? hashtags.roomTypes : hashtags.styles;
+    
+    // Check for duplicates
+    if (editIndex === '' && tagArray.includes(name)) {
+        alert('Hashtag này đã tồn tại!');
+        return;
+    }
+    
+    if (editIndex !== '') {
+        // Edit existing
+        const editTagArray = editType === 'roomType' ? hashtags.roomTypes : hashtags.styles;
+        if (editIndex !== '' && editTagArray[editIndex] !== name && tagArray.includes(name)) {
+            alert('Hashtag này đã tồn tại!');
+            return;
+        }
+        editTagArray[editIndex] = name;
+    } else {
+        // Add new
+        tagArray.push(name);
+    }
+    
+    saveHashtags(hashtags);
+    loadHashtags();
+    closeHashtagModal();
+    alert('Đã lưu hashtag thành công!');
+}
+
+// Close hashtag modal
+function closeHashtagModal() {
+    document.getElementById('hashtagModal').classList.remove('active');
+    document.getElementById('hashtagForm').reset();
+    document.getElementById('hashtagForm').dataset.editIndex = '';
+    document.getElementById('hashtagForm').dataset.editType = '';
+    document.getElementById('hashtagType').disabled = false;
+}
+
+// Make functions available globally
+window.editHashtag = editHashtag;
+window.deleteHashtag = deleteHashtag;
+window.closeHashtagModal = closeHashtagModal;
+
 // Initialize settings form
 function initSettingsForm() {
-    const adminUsername = localStorage.getItem('adminUsername') || DEFAULT_ADMIN_USERNAME;
-    document.getElementById('adminUsername').value = adminUsername;
+    // Get current logged in user
+    const currentUser = localStorage.getItem('currentUser') || 'admin';
+    document.getElementById('adminUsername').value = currentUser;
     
     // Load image compression settings
     const maxWidth = localStorage.getItem('imageMaxWidth') || '1200';
@@ -552,7 +851,7 @@ function initSettingsForm() {
     
     if (saveSettingsBtn) {
         saveSettingsBtn.addEventListener('click', () => {
-            const username = document.getElementById('adminUsername').value;
+            const username = document.getElementById('adminUsername').value.trim();
             const password = document.getElementById('adminPassword').value;
             const confirmPassword = document.getElementById('confirmPassword').value;
             
@@ -561,15 +860,42 @@ function initSettingsForm() {
                 return;
             }
             
+            // Update admin accounts system
+            const accounts = getAdminAccounts();
+            const currentUser = localStorage.getItem('currentUser') || 'admin';
+            
+            // If changing username, create new account and delete old one
+            if (username !== currentUser) {
+                if (accounts[username]) {
+                    alert('Tên đăng nhập này đã tồn tại!');
+                    return;
+                }
+                // Create new account with same password if not changing password
+                accounts[username] = {
+                    password: password || accounts[currentUser].password,
+                    createdAt: accounts[currentUser].createdAt || new Date().toISOString(),
+                    isAdmin: accounts[currentUser].isAdmin || false
+                };
+                // Update current user
+                localStorage.setItem('currentUser', username);
+                // Don't delete old account, keep it for safety
+            }
+            
+            // Update password if provided
             if (password) {
                 if (password !== confirmPassword) {
                     alert('Mật khẩu xác nhận không khớp!');
                     return;
                 }
-                localStorage.setItem('adminPassword', password);
+                if (password.length < 6) {
+                    alert('Mật khẩu phải có ít nhất 6 ký tự!');
+                    return;
+                }
+                accounts[username].password = password;
             }
             
-            localStorage.setItem('adminUsername', username);
+            // Save accounts
+            localStorage.setItem('adminAccounts', JSON.stringify(accounts));
             
             // Save image compression settings
             const maxWidth = document.getElementById('maxImageWidth').value;

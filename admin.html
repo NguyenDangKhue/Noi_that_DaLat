@@ -47,6 +47,9 @@
                 <button class="btn-add" onclick="openAddModal()">
                     <span>+</span> Thêm Dự Án Mới
                 </button>
+                <button class="btn-hashtag" onclick="toggleHashtagSection()" id="toggleHashtagBtn" style="background: #27ae60; color: white; padding: 0.5rem 1rem; border: none; border-radius: 6px; cursor: pointer; font-weight: 500;">
+                    <span>🏷️</span> Quản Lý Hashtag
+                </button>
                 <button class="btn-export" onclick="exportData()">
                     <span>📥</span> Export Dữ Liệu
                 </button>
@@ -54,6 +57,33 @@
                     <span>📤</span> Import Dữ Liệu
                 </label>
                 <input type="file" id="importFile" accept=".json" style="display: none;" onchange="importData(event)">
+                <button class="btn-select-file" onclick="selectDataJsonFileForAutoSave()" id="selectFileBtn" title="Chọn file data.json để tự động lưu đè khi có thay đổi">
+                    <span>📁</span> Chọn File data.json
+                </button>
+            </div>
+        </div>
+
+        <!-- Hashtag Management Section -->
+        <div class="hashtag-management-section" id="hashtagSection" style="display: none; margin-top: 2rem; padding: 1.5rem; background: #f9f9f9; border-radius: 8px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+                <h2 style="margin: 0; color: var(--primary-color);">Quản Lý Hashtag</h2>
+                <button class="btn-add" onclick="openAddHashtagModal()" style="padding: 0.5rem 1rem;">
+                    <span>+</span> Thêm Hashtag Mới
+                </button>
+            </div>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem;">
+                <div class="hashtag-category" style="background: white; padding: 1.5rem; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                    <h3 style="margin-bottom: 1rem; color: var(--primary-color); padding-bottom: 0.5rem; border-bottom: 2px solid #eee;">Loại Phòng</h3>
+                    <div id="roomTypesList" class="hashtags-list">
+                        <!-- Room types will be loaded here -->
+                    </div>
+                </div>
+                <div class="hashtag-category" style="background: white; padding: 1.5rem; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                    <h3 style="margin-bottom: 1rem; color: var(--primary-color); padding-bottom: 0.5rem; border-bottom: 2px solid #eee;">Phong Cách</h3>
+                    <div id="stylesList" class="hashtags-list">
+                        <!-- Styles will be loaded here -->
+                    </div>
+                </div>
             </div>
         </div>
 
@@ -108,7 +138,8 @@
                 </div>
                 <div class="form-group">
                     <label for="projectStyle">Phong cách</label>
-                    <input type="text" id="projectStyle">
+                    <textarea id="projectStyle" rows="6" placeholder="Có thể xuống dòng và dùng dấu '-' hoặc '*' để tạo gạch đầu dòng&#10;Ví dụ:&#10;- Mục 1&#10;- Mục 2"></textarea>
+                    <small class="form-hint">Có thể xuống dòng và dùng dấu '-' hoặc '*' ở đầu dòng để tạo gạch đầu dòng</small>
                 </div>
                 <div class="form-group">
                     <label for="projectTime">Thời gian</label>
@@ -116,13 +147,59 @@
                 </div>
                 <div class="form-group">
                     <label for="projectMaterials">Vật liệu</label>
-                    <input type="text" id="projectMaterials">
+                    <textarea id="projectMaterials" rows="8" placeholder="Có thể xuống dòng và dùng dấu '-' hoặc '*' để tạo gạch đầu dòng&#10;Ví dụ:&#10;- Mục 1&#10;- Mục 2"></textarea>
+                    <small class="form-hint">Có thể xuống dòng và dùng dấu '-' hoặc '*' ở đầu dòng để tạo gạch đầu dòng</small>
                 </div>
                 <div class="form-group">
                     <label for="projectPrice">Giá trọn gói</label>
                     <input type="text" id="projectPrice" required>
                 </div>
+                <div class="form-group">
+                    <label>Hashtag</label>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                        <div>
+                            <label for="projectRoomType" style="font-size: 0.9rem; color: #666; margin-bottom: 0.5rem; display: block;">Loại phòng:</label>
+                            <select id="projectRoomType" style="width: 100%; padding: 0.5rem; border: 1px solid #ddd; border-radius: 4px;">
+                                <option value="">-- Chọn loại phòng --</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label for="projectHashtagStyles" style="font-size: 0.9rem; color: #666; margin-bottom: 0.5rem; display: block;">Phong cách (có thể chọn nhiều):</label>
+                            <select id="projectHashtagStyles" multiple style="width: 100%; padding: 0.5rem; border: 1px solid #ddd; border-radius: 4px; min-height: 100px;">
+                            </select>
+                            <small style="color: #666; font-size: 0.85rem;">Giữ Ctrl (Cmd trên Mac) để chọn nhiều</small>
+                        </div>
+                    </div>
+                </div>
                 <button type="button" class="btn-submit" id="saveProjectBtn" onclick="addProject()">Lưu</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Add/Edit Hashtag Modal -->
+    <div class="modal" id="hashtagModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title" id="hashtagModalTitle">Thêm Hashtag Mới</h2>
+                <button class="close-modal" onclick="closeHashtagModal()">&times;</button>
+            </div>
+            <form id="hashtagForm" onsubmit="event.preventDefault(); saveHashtag();">
+                <div class="form-group">
+                    <label for="hashtagType">Loại hashtag *</label>
+                    <select id="hashtagType" required>
+                        <option value="">-- Chọn loại --</option>
+                        <option value="roomType">Loại Phòng</option>
+                        <option value="style">Phong Cách</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="hashtagName">Tên hashtag *</label>
+                    <input type="text" id="hashtagName" placeholder="Ví dụ: Phòng Khách, Hiện đại..." required>
+                </div>
+                <div class="form-actions" style="display: flex; gap: 0.5rem; justify-content: flex-end; margin-top: 1rem;">
+                    <button type="button" class="btn-cancel" onclick="closeHashtagModal()">Hủy</button>
+                    <button type="submit" class="btn-submit">Lưu Hashtag</button>
+                </div>
             </form>
         </div>
     </div>
