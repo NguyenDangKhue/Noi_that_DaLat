@@ -402,10 +402,22 @@ function extractRoomType(project) {
         ];
         
         // Check if title has a specific room type that doesn't match saved hashtag
+        // Only override if there's a clear mismatch (not just a substring match)
         for (const { key, value } of titleRoomTypes) {
             const regex = new RegExp(`\\b${key.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'i');
             if (regex.test(title) && value !== savedRoomType) {
-                // Title indicates different room type, use title instead
+                // Check if savedRoomType contains the title value (e.g., "Phòng tắm + Wc" contains "Phòng Tắm")
+                // If so, keep the more specific savedRoomType
+                const savedLower = savedRoomType.toLowerCase();
+                const valueLower = value.toLowerCase();
+                
+                // If saved hashtag is more specific (contains the title value), keep it
+                if (savedLower.includes(valueLower) || valueLower.includes(savedLower)) {
+                    // They're related, keep the saved (more specific) one
+                    return savedRoomType;
+                }
+                
+                // Title indicates a completely different room type, use title instead
                 console.warn(`Hashtag mismatch: Saved "${savedRoomType}" but title suggests "${value}". Using title.`);
                 return value;
             }
@@ -608,7 +620,20 @@ function filterProjects() {
         
         // Check room type filter
         const matchesRoomType = currentFilters.roomTypes.length === 0 ||
-            currentFilters.roomTypes.includes(roomType);
+            currentFilters.roomTypes.some(filterRoomType => {
+                // Normalize both values for comparison (trim and case-insensitive)
+                const normalizedFilter = filterRoomType.trim();
+                const normalizedProject = roomType.trim();
+                
+                // Exact match (case-insensitive)
+                if (normalizedFilter.toLowerCase() === normalizedProject.toLowerCase()) {
+                    return true;
+                }
+                
+                // Also check if one contains the other (for partial matches)
+                return normalizedFilter.toLowerCase().includes(normalizedProject.toLowerCase()) ||
+                       normalizedProject.toLowerCase().includes(normalizedFilter.toLowerCase());
+            });
         
         return matchesStyle && matchesRoomType;
     });
@@ -1726,8 +1751,8 @@ function addProject() {
         },
         price,
         hashtags: {
-            roomType: roomTypeInput || null,
-            styles: hashtagStyles.length > 0 ? hashtagStyles : null
+            roomType: roomType || null,
+            styles: selectedStyles.length > 0 ? selectedStyles : null
         }
     };
     

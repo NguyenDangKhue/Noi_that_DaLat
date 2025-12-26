@@ -94,84 +94,231 @@
 
     <!-- Modal for Add/Edit Project -->
     <div class="modal" id="projectModal">
-        <div class="modal-content">
+        <div class="modal-content modal-project">
             <div class="modal-header">
-                <h2 class="modal-title" id="modalTitle">Thêm Dự Án Mới</h2>
-                <button class="close-modal" onclick="closeModal()">&times;</button>
+                <div class="modal-header-content">
+                    <h2 class="modal-title" id="modalTitle">
+                        <span class="modal-icon">✨</span>
+                        Thêm Dự Án Mới
+                    </h2>
+                    <p class="modal-subtitle">Điền thông tin chi tiết về dự án thiết kế của bạn</p>
+                </div>
+                <button class="close-modal" onclick="closeModal()" title="Đóng">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                    </svg>
+                </button>
             </div>
-            <form onsubmit="event.preventDefault();">
-                <div class="form-group">
-                    <label for="projectTitle">Tên dự án</label>
-                    <input type="text" id="projectTitle" required>
-                </div>
-                <div class="form-group">
-                    <label for="projectDescription">Mô tả ngắn</label>
-                    <input type="text" id="projectDescription" required>
-                </div>
-                <div class="form-group">
-                    <label for="beforeImageFile">Ảnh trước khi thiết kế <span style="color: red;">*</span></label>
-                    <input type="file" id="beforeImageFile" accept="image/*" onchange="handleImageUpload('beforeImageFile', 'beforeImage', 'beforeImagePreview')">
-                    <div class="image-preview-container">
-                        <img id="beforeImagePreview" class="image-preview" style="display: none;">
-                        <span class="image-preview-placeholder" id="beforeImagePlaceholder">Chưa có hình ảnh</span>
-                    </div>
-                    <input type="hidden" id="beforeImage">
-                    <small class="form-hint">Hoặc nhập URL: <input type="url" id="beforeImageUrl" placeholder="https://..." onchange="if(this.value) { document.getElementById('beforeImage').value = this.value; document.getElementById('beforeImagePreview').src = this.value; document.getElementById('beforeImagePreview').style.display = 'block'; document.getElementById('beforeImagePlaceholder').style.display = 'none'; }"></small>
-                </div>
-                <div class="form-group">
-                    <label for="afterImageFile">Ảnh sau khi thiết kế <span style="color: red;">*</span></label>
-                    <input type="file" id="afterImageFile" accept="image/*" onchange="handleImageUpload('afterImageFile', 'afterImage', 'afterImagePreview')">
-                    <div class="image-preview-container">
-                        <img id="afterImagePreview" class="image-preview" style="display: none;">
-                        <span class="image-preview-placeholder" id="afterImagePlaceholder">Chưa có hình ảnh</span>
-                    </div>
-                    <input type="hidden" id="afterImage">
-                    <small class="form-hint">Hoặc nhập URL: <input type="url" id="afterImageUrl" placeholder="https://..." onchange="if(this.value) { document.getElementById('afterImage').value = this.value; document.getElementById('afterImagePreview').src = this.value; document.getElementById('afterImagePreview').style.display = 'block'; document.getElementById('afterImagePlaceholder').style.display = 'none'; }"></small>
-                </div>
-                <div class="form-group">
-                    <label for="projectDetails">Mô tả chi tiết</label>
-                    <textarea id="projectDetails" required></textarea>
-                </div>
-                <div class="form-group">
-                    <label for="projectArea">Diện tích</label>
-                    <input type="text" id="projectArea">
-                </div>
-                <div class="form-group">
-                    <label for="projectStyle">Phong cách</label>
-                    <textarea id="projectStyle" rows="6" placeholder="Có thể xuống dòng và dùng dấu '-' hoặc '*' để tạo gạch đầu dòng&#10;Ví dụ:&#10;- Mục 1&#10;- Mục 2"></textarea>
-                    <small class="form-hint">Có thể xuống dòng và dùng dấu '-' hoặc '*' ở đầu dòng để tạo gạch đầu dòng</small>
-                </div>
-                <div class="form-group">
-                    <label for="projectTime">Thời gian</label>
-                    <input type="text" id="projectTime">
-                </div>
-                <div class="form-group">
-                    <label for="projectMaterials">Vật liệu</label>
-                    <textarea id="projectMaterials" rows="8" placeholder="Có thể xuống dòng và dùng dấu '-' hoặc '*' để tạo gạch đầu dòng&#10;Ví dụ:&#10;- Mục 1&#10;- Mục 2"></textarea>
-                    <small class="form-hint">Có thể xuống dòng và dùng dấu '-' hoặc '*' ở đầu dòng để tạo gạch đầu dòng</small>
-                </div>
-                <div class="form-group">
-                    <label for="projectPrice">Giá trọn gói</label>
-                    <input type="text" id="projectPrice" required>
-                </div>
-                <div class="form-group">
-                    <label>Hashtag</label>
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
-                        <div>
-                            <label for="projectRoomType" style="font-size: 0.9rem; color: #666; margin-bottom: 0.5rem; display: block;">Loại phòng:</label>
-                            <select id="projectRoomType" style="width: 100%; padding: 0.5rem; border: 1px solid #ddd; border-radius: 4px;">
-                                <option value="">-- Chọn loại phòng --</option>
-                            </select>
+            
+            <form onsubmit="event.preventDefault();" class="project-form-modal">
+                <div class="form-sections">
+                    <!-- Section 1: Thông tin cơ bản -->
+                    <div class="form-section">
+                        <div class="section-header">
+                            <span class="section-number">01</span>
+                            <h3 class="section-title">Thông Tin Cơ Bản</h3>
                         </div>
-                        <div>
-                            <label for="projectHashtagStyles" style="font-size: 0.9rem; color: #666; margin-bottom: 0.5rem; display: block;">Phong cách (có thể chọn nhiều):</label>
-                            <select id="projectHashtagStyles" multiple style="width: 100%; padding: 0.5rem; border: 1px solid #ddd; border-radius: 4px; min-height: 100px;">
-                            </select>
-                            <small style="color: #666; font-size: 0.85rem;">Giữ Ctrl (Cmd trên Mac) để chọn nhiều</small>
+                        <div class="section-content">
+                            <div class="form-group">
+                                <label for="projectTitle" class="form-label">
+                                    <span class="label-icon">📝</span>
+                                    Tên dự án
+                                    <span class="required">*</span>
+                                </label>
+                                <input type="text" id="projectTitle" class="form-input" placeholder="Nhập tên dự án..." required>
+                            </div>
+                            <div class="form-group">
+                                <label for="projectDescription" class="form-label">
+                                    <span class="label-icon">📄</span>
+                                    Mô tả ngắn
+                                    <span class="required">*</span>
+                                </label>
+                                <input type="text" id="projectDescription" class="form-input" placeholder="Mô tả ngắn gọn về dự án..." required>
+                            </div>
+                            <div class="form-group">
+                                <label for="projectDetails" class="form-label">
+                                    <span class="label-icon">📋</span>
+                                    Mô tả chi tiết
+                                    <span class="required">*</span>
+                                </label>
+                                <textarea id="projectDetails" class="form-textarea" rows="4" placeholder="Mô tả chi tiết về dự án thiết kế..." required></textarea>
+                            </div>
                         </div>
                     </div>
+
+                    <!-- Section 2: Hình ảnh -->
+                    <div class="form-section">
+                        <div class="section-header">
+                            <span class="section-number">02</span>
+                            <h3 class="section-title">Hình Ảnh Dự Án</h3>
+                        </div>
+                        <div class="section-content">
+                            <div class="image-upload-grid">
+                                <div class="image-upload-item">
+                                    <label class="form-label">
+                                        <span class="label-icon">📸</span>
+                                        Ảnh trước khi thiết kế
+                                        <span class="required">*</span>
+                                    </label>
+                                    <div class="file-upload-wrapper">
+                                        <input type="file" id="beforeImageFile" accept="image/*" class="file-input" onchange="handleImageUpload('beforeImageFile', 'beforeImage', 'beforeImagePreview')">
+                                        <label for="beforeImageFile" class="file-upload-label">
+                                            <span class="upload-icon">📁</span>
+                                            <span class="upload-text">Chọn ảnh hoặc kéo thả vào đây</span>
+                                        </label>
+                                    </div>
+                                    <div class="image-preview-wrapper">
+                                        <img id="beforeImagePreview" class="image-preview" style="display: none;">
+                                        <div class="image-preview-placeholder" id="beforeImagePlaceholder">
+                                            <span class="placeholder-icon">🖼️</span>
+                                            <span>Chưa có hình ảnh</span>
+                                        </div>
+                                    </div>
+                                    <div class="url-input-wrapper">
+                                        <label class="url-label">Hoặc nhập URL:</label>
+                                        <input type="url" id="beforeImageUrl" class="url-input" placeholder="https://..." onchange="if(this.value) { document.getElementById('beforeImage').value = this.value; document.getElementById('beforeImagePreview').src = this.value; document.getElementById('beforeImagePreview').style.display = 'block'; document.getElementById('beforeImagePlaceholder').style.display = 'none'; }">
+                                    </div>
+                                    <input type="hidden" id="beforeImage">
+                                </div>
+                                
+                                <div class="image-upload-item">
+                                    <label class="form-label">
+                                        <span class="label-icon">✨</span>
+                                        Ảnh sau khi thiết kế
+                                        <span class="required">*</span>
+                                    </label>
+                                    <div class="file-upload-wrapper">
+                                        <input type="file" id="afterImageFile" accept="image/*" class="file-input" onchange="handleImageUpload('afterImageFile', 'afterImage', 'afterImagePreview')">
+                                        <label for="afterImageFile" class="file-upload-label">
+                                            <span class="upload-icon">📁</span>
+                                            <span class="upload-text">Chọn ảnh hoặc kéo thả vào đây</span>
+                                        </label>
+                                    </div>
+                                    <div class="image-preview-wrapper">
+                                        <img id="afterImagePreview" class="image-preview" style="display: none;">
+                                        <div class="image-preview-placeholder" id="afterImagePlaceholder">
+                                            <span class="placeholder-icon">🖼️</span>
+                                            <span>Chưa có hình ảnh</span>
+                                        </div>
+                                    </div>
+                                    <div class="url-input-wrapper">
+                                        <label class="url-label">Hoặc nhập URL:</label>
+                                        <input type="url" id="afterImageUrl" class="url-input" placeholder="https://..." onchange="if(this.value) { document.getElementById('afterImage').value = this.value; document.getElementById('afterImagePreview').src = this.value; document.getElementById('afterImagePreview').style.display = 'block'; document.getElementById('afterImagePlaceholder').style.display = 'none'; }">
+                                    </div>
+                                    <input type="hidden" id="afterImage">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Section 3: Thông tin kỹ thuật -->
+                    <div class="form-section">
+                        <div class="section-header">
+                            <span class="section-number">03</span>
+                            <h3 class="section-title">Thông Tin Kỹ Thuật</h3>
+                        </div>
+                        <div class="section-content">
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="projectArea" class="form-label">
+                                        <span class="label-icon">📐</span>
+                                        Diện tích
+                                    </label>
+                                    <input type="text" id="projectArea" class="form-input" placeholder="Ví dụ: 45m²">
+                                </div>
+                                <div class="form-group">
+                                    <label for="projectTime" class="form-label">
+                                        <span class="label-icon">⏱️</span>
+                                        Thời gian
+                                    </label>
+                                    <input type="text" id="projectTime" class="form-input" placeholder="Ví dụ: 2 tháng">
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label for="projectStyle" class="form-label">
+                                    <span class="label-icon">🎨</span>
+                                    Phong cách
+                                </label>
+                                <textarea id="projectStyle" class="form-textarea" rows="5" placeholder="Mô tả phong cách thiết kế...&#10;Có thể xuống dòng và dùng dấu '-' hoặc '*' để tạo gạch đầu dòng&#10;Ví dụ:&#10;- Mục 1&#10;- Mục 2"></textarea>
+                                <small class="form-hint">
+                                    <span class="hint-icon">💡</span>
+                                    Có thể xuống dòng và dùng dấu '-' hoặc '*' ở đầu dòng để tạo gạch đầu dòng
+                                </small>
+                            </div>
+                            <div class="form-group">
+                                <label for="projectMaterials" class="form-label">
+                                    <span class="label-icon">🏗️</span>
+                                    Vật liệu
+                                </label>
+                                <textarea id="projectMaterials" class="form-textarea" rows="6" placeholder="Liệt kê các vật liệu sử dụng...&#10;Có thể xuống dòng và dùng dấu '-' hoặc '*' để tạo gạch đầu dòng&#10;Ví dụ:&#10;- Mục 1&#10;- Mục 2"></textarea>
+                                <small class="form-hint">
+                                    <span class="hint-icon">💡</span>
+                                    Có thể xuống dòng và dùng dấu '-' hoặc '*' ở đầu dòng để tạo gạch đầu dòng
+                                </small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Section 4: Giá và Hashtag -->
+                    <div class="form-section">
+                        <div class="section-header">
+                            <span class="section-number">04</span>
+                            <h3 class="section-title">Giá Cả & Phân Loại</h3>
+                        </div>
+                        <div class="section-content">
+                            <div class="form-group">
+                                <label for="projectPrice" class="form-label">
+                                    <span class="label-icon">💰</span>
+                                    Giá trọn gói
+                                    <span class="required">*</span>
+                                </label>
+                                <input type="text" id="projectPrice" class="form-input" placeholder="Ví dụ: 150.000.000 VNĐ" required>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">
+                                    <span class="label-icon">🏷️</span>
+                                    Hashtag & Phân Loại
+                                </label>
+                                <div class="hashtag-selectors">
+                                    <div class="hashtag-selector">
+                                        <label for="projectRoomType" class="selector-label">
+                                            <span class="selector-icon">🏠</span>
+                                            Loại phòng
+                                        </label>
+                                        <select id="projectRoomType" class="form-select">
+                                            <option value="">-- Chọn loại phòng --</option>
+                                        </select>
+                                    </div>
+                                    <div class="hashtag-selector">
+                                        <label for="projectHashtagStyles" class="selector-label">
+                                            <span class="selector-icon">🎭</span>
+                                            Phong cách (có thể chọn nhiều)
+                                        </label>
+                                        <select id="projectHashtagStyles" multiple class="form-select form-select-multiple">
+                                        </select>
+                                        <small class="form-hint">
+                                            <span class="hint-icon">⌨️</span>
+                                            Giữ Ctrl (Cmd trên Mac) để chọn nhiều
+                                        </small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-                <button type="button" class="btn-submit" id="saveProjectBtn" onclick="addProject()">Lưu</button>
+
+                <!-- Form Actions -->
+                <div class="form-actions">
+                    <button type="button" class="btn-cancel" onclick="closeModal()">
+                        <span>❌</span>
+                        Hủy
+                    </button>
+                    <button type="button" class="btn-submit" id="saveProjectBtn" onclick="addProject()">
+                        <span>💾</span>
+                        Lưu Dự Án
+                    </button>
+                </div>
             </form>
         </div>
     </div>
